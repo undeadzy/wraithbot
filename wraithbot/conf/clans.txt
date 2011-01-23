@@ -1,0 +1,67 @@
+# List of clans.  This file has a strict structure due to the regex.
+# This is not intended to be exhaustive so don't be offended if your
+# clan isn't listed here. :)  It is supposed to be mid to top tier
+# clans.  This list is used to report out whether it is a good pub or not.
+#
+# The euro clan list is very sparse right now because I don't play in
+# Clanbase so I don't know who to add.
+#
+# clan name <one or more tabs> <regex>
+#
+# Assume the regex is wrapped with:   qr{regex}xms
+# Clan names can't have tabs so that's why there can be more than one
+
+# NA/SA clans
+iCu		^iCu\*
+VeX		^/VeX/
+Ven		^>[a-zA-Z0-9!_.]+$
+PoundCake	^\[\#\]
+XeV		^/XeV/
+xil		^xil-
+NN		^\|NN\|
+GlaD		^GlaD
+xor		^xor-
+M-19		^\[M-19\]
+dt		^\[dt\]
+SA		^SA\|
+syh		^syh\.
+NoCareBear	^\[\</3\]
+WarHorsies	^'`\|v\|\~
+
+# Euro clans.  This list is tiny right now.  There are a lot of
+# good euro clans.  Someone submit more!
+jF		^=jF=
+duff		^duff\.
+puff		^puff\*\*
+SG		^\+SG\+
+ESCN		^ESCN-
+M|estres	^M\|
+dynasty		^-dyNasty-
+QA		^QA-
+
+# More clans
+dhs		^dhs\|
+pRo		\*pRo$
+21		^(21|blackjack)\.
+THC		^\*THC\*
+zL		^zL\*
+eVo		^/eVo/
+NRG		^\*NRG\|
+pnk		^pnk\|
+no		^no\|
+p5		^p5\.
+sM		^\]sM\..+\[$
+cDc		^cDc\*
+wTf		^wTf\|
+Q0		^-Q0
+
+# Dead clans that were good.  May catch a few members from time to time.
+# This list is also tiny and could use some help.
+blam		^\.:blam:\.
+enigma		^\[e\]
+Zt		^Zt\|
+dna		^>dna<
+unified		^\.un\.
+wf		^w\]\[
+mollywhop	^\|\|\|[a-zA-Z0-9!_.]+$
+Terror		^\[T\]}

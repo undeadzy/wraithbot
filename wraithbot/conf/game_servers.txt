@@ -1,0 +1,29 @@
+# Edit this for the list of servers you want.  You will want to have an unique prefix
+# because commands like !players will match on the prefix.
+#
+# Try to keep the names as short as possible.
+# It will use the space for the longest entry for all in
+# order to line it up.
+#
+# Don't keep too many in here because we have to output to IRC.
+
+Seph iCu*          74.53.199.58:27960
+GS iCu*           68.232.163.39:27960
+PP iCu*         206.217.135.115:27960
+UrT East          74.207.235.61:27961
+Pro UrT East      74.207.235.61:27960
+wTf SD           64.156.193.115:27963
+Spray & Pray         8.6.15.144:27960
+fidelitas         85.25.120.160:30100
+=jF=              81.19.219.168:27970
+Casatown          85.25.150.135:29500
+Res Casatown      85.10.207.173:29600
+THC              68.232.174.110:27960
+Call of Nooby    64.156.192.169:27964
+eVo              216.52.143.226:27962
+NRG              68.232.169.215:27960
+FTW TS             208.43.15.69:27960
+FTW Bomb          208.93.223.135:3555
+TR Turk          195.137.222.81:27960
+Z BotB          208.167.243.205:27960
+West Z Best           8.6.15.92:27960

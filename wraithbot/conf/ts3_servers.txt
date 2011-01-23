@@ -1,0 +1,48 @@
+#
+# This is the list of ts3 servers that the bot can query
+#
+# client_port is what you use to connect with the GUI
+# query_port is the server instance specific port
+#            used for the Server Query protocol
+#
+# You need these permissions in order to use it:
+#
+# In the GUI, Permissions -> Server Groups -> Guest
+# Under Virtual Server -> Information, add these:
+#    view server info
+#    view server connection info (really needed?)
+#    view existing channels
+#    view list of clients online
+#
+# You can use telnet to view the output interactively.
+# Here's an example with iCu's TS3.  The parts in [[...]]
+# were my input.
+#
+# host$ [[telnet 173.45.231.242 10011]]
+# Trying 173.45.231.242...
+# Connected to 173.45.231.242.
+# Escape character is '^]'.
+# TS3
+# Welcome to the TeamSpeak 3 ServerQuery interface, type "help" for a list of commands and "help <command>" for information on a specific command.
+# [[use port=9987]]
+# error id=0 msg=ok
+# [[clientlist]]
+# ... list of clients here (omitted)
+# error id=0 msg=ok
+# [[quit]]
+# error id=0 msg=ok
+# Connection closed by foreign host.
+# host$
+
+# name         IP          client_port   query_port
+
+# Cake renamed back to ven
+ven         66.55.149.29       9160         9100
+iCu*      173.45.231.242       9987        10011
+b00bs     188.138.48.106       9987        10011
+NRG       207.192.73.103       9987        10011
+eVo       216.52.143.226       9987        10011
+urteast    74.207.235.61       9987        10011
+
+# Insufficient permissions on pugbot.
+#pugbot    208.93.223.132       9987        10011

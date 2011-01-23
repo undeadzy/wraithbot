@@ -1,0 +1,29 @@
+# Quotes for the IRC bot.
+#
+# Format is:
+# ^username$        # Username is at the start of the line
+# ^\s+(\S+.+)\s*$   # Lines of the quote must have a space prefix
+# ^\s*$             # Inbetween quotes is a blank line
+
+nem
+	00:17 <@nem`> oasis...
+	00:17 <@nem`> ewww
+	00:19 <@nem`> you can never mock my music ever again undead
+	00:19 <@nem`> you're on my level now
+
+flaw
+	00:13 <@flaw`afk> sorry i was a total badass, but not an epic badass
+	00:14 <@flaw`afk> my fault
+
+	15:54 <@flaw`afk> it's perfectly acceptable to be drunk at any hour of the day
+
+cyn
+	00:27 < dwg-cam> lookin fo scrimrim
+	02:30 < dwg-cam> looking for cyns gay
+	02:30 < dwg-cam> looking for cyns gay
+	02:39 < cyn> once upon a time
+	02:39 < cyn> a monkey was born
+	02:40 < cyn> i forgot the rest of the story but your mom was a whore
+
+ziggy
+	02:39 <@ziggy> WHATS GOOD
