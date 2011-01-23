@@ -27,43 +27,45 @@ use warnings;
 
 use Readonly;
 
-use version 0.77;  our $VERSION = version->declare('v0.0.1');
+use version 0.77; our $VERSION = version->declare('v0.0.1');
 
-Readonly my $SERVER => 'server';
-Readonly my $PORT => 'port';
+Readonly my $SERVER     => 'server';
+Readonly my $PORT       => 'port';
 Readonly my $FLOOD_TIME => 'flood_time';
 Readonly my $FLOOD_CMDS => 'flood_cmds';
 
 # Util::TS3::Auth->new({ server => 'name', [ port => 10011, [ flood_time => 3, [ flood_cmds => 10 ]]] });
 sub new {
-    my ($inp, @args) = @_;
+    my ( $inp, @args ) = @_;
     my $class = ref($inp) || $inp;
 
-    if (scalar(@args) < 1) {
-	confess qq{Must supply at least the server and optionally port};
+    if ( scalar(@args) < 1 ) {
+        confess qq{Must supply at least the server and optionally port};
     }
 
     my $self = {
-	server => $args->{$SERVER},
-	port => exists($args->{$PORT}) ? $args->{$PORT} : 10011,
+        server => $args->{$SERVER},
+        port   => exists( $args->{$PORT} ) ? $args->{$PORT} : 10011,
 
-	# SERVERINSTANCE_SERVERQUERY_FLOOD_COMMANDS
-	flood_cmds => exists($args->{$FLOOD_CMDS}) ? $args->{$FLOOD_CMDS} : 10,
+        # SERVERINSTANCE_SERVERQUERY_FLOOD_COMMANDS
+        flood_cmds => exists( $args->{$FLOOD_CMDS} )
+        ? $args->{$FLOOD_CMDS}
+        : 10,
 
-	# SERVERINSTANCE_SERVERQUERY_FLOOD_TIME
-	flood_time => exists($args->{$FLOOD_TIME}) ? $args->{$FLOOD_TIME} : 3,
+        # SERVERINSTANCE_SERVERQUERY_FLOOD_TIME
+        flood_time => exists( $args->{$FLOOD_TIME} ) ? $args->{$FLOOD_TIME} : 3,
     };
 
-    if (! defined($self->{$SERVER})) {
-	confess qq{Must supply a server};
+    if ( !defined( $self->{$SERVER} ) ) {
+        confess qq{Must supply a server};
     }
     foreach my $check qw($PORT $FLOOD_TIME $FLOOD_CMDS) {
-	if ($self->{$check} !~ /^\d+$/xms) {
-	    confess qq{Must supply a numeric $check};
-	}
+        if ( $self->{$check} !~ /^\d+$/xms ) {
+            confess qq{Must supply a numeric $check};
+        }
     }
 
-    bless($self, $class);
+    bless( $self, $class );
     return $self;
 }
 

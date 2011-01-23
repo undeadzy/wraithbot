@@ -34,141 +34,156 @@ use Text::Wrap;
 
 use Util::TS3::Commands;
 
-use version 0.77;  our $VERSION = version->declare('v0.0.1');
+use version 0.77; our $VERSION = version->declare('v0.0.1');
 
-Readonly my $SERVER     => 'server';
-Readonly my $PORT       => 'port';
-Readonly my $TS3        => 'ts3';
+Readonly my $SERVER => 'server';
+Readonly my $PORT   => 'port';
+Readonly my $TS3    => 'ts3';
 
 # XXX NOTE: TS3 has the newline backwards.  It should be \r\n not \n\r
 sub new {
-    my ($inp, $server, $port) = @_;
+    my ( $inp, $server, $port ) = @_;
     my $class = ref($inp) || $inp;
 
-    my $self = {
-	ts3 => Util::TS3::Commands->new({ server => $server, port => $port }),
-    };
+    my $self =
+      { ts3 => Util::TS3::Commands->new( { server => $server, port => $port } ),
+      };
 
-    bless($self, $class);
+    bless( $self, $class );
     return $self;
 }
 
 sub irc_listing {
-    my ($self, $virt_server) = @_;
+    my ( $self, $virt_server ) = @_;
 
     my $result = $self->get_listing($virt_server);
 
     my $msg = $self->_get_irc_message($result);
 
-    local($Text::Wrap::columns) = 400;
-    my $split_msg = wrap("", "", $msg);
-    my @lines = split(/\n/xms, $split_msg);
+    local ($Text::Wrap::columns) = 400;
+    my $split_msg = wrap( "", "", $msg );
+    my @lines = split( /\n/xms, $split_msg );
 
     return @lines;
 }
 
 sub _get_irc_message {
-    my ($self, $results) = @_;
+    my ( $self, $results ) = @_;
 
     my $string = "";
-    for my $id (sort { lc($results->{$a}->{name}) cmp lc($results->{$b}->{name}) } keys(%{$results})) {
-	$string .= "[" . $self->_sanitize($results->{$id}->{name}, 30) . ": ";
-	my @names;
-	for my $player (sort { lc($a->{name}) cmp lc($b->{name}) } @{$results->{$id}->{players}}) {
-	    my $n = $self->_sanitize($player->{name}, 15);
-	    push(@names, $n . $self->_mute_status($player));
-	}
-	$string .= join(", ", @names) . "]\n";
+    for my $id (
+        sort { lc( $results->{$a}->{name} ) cmp lc( $results->{$b}->{name} ) }
+        keys( %{$results} ) )
+    {
+        $string .= "[" . $self->_sanitize( $results->{$id}->{name}, 30 ) . ": ";
+        my @names;
+        for my $player ( sort { lc( $a->{name} ) cmp lc( $b->{name} ) }
+            @{ $results->{$id}->{players} } )
+        {
+            my $n = $self->_sanitize( $player->{name}, 15 );
+            push( @names, $n . $self->_mute_status($player) );
+        }
+        $string .= join( ", ", @names ) . "]\n";
     }
 
     return $string;
 }
 
 sub _mute_status {
-    my ($self, $player) = @_;
+    my ( $self, $player ) = @_;
 
-    my $in = $player->{in_mute};
+    my $in  = $player->{in_mute};
     my $out = $player->{out_mute};
 
     if ($in) {
-	if ($out) {
-	    return "[M/M]";
-	} else {
-	    return "[M]";
-	}
+        if ($out) {
+            return "[M/M]";
+        }
+        else {
+            return "[M]";
+        }
 
-    } elsif ($out) {
-	return "[/M]";
+    }
+    elsif ($out) {
+        return "[/M]";
     }
 
     return "";
 }
 
 sub _sanitize {
-    my ($self, $msg, $max_len) = @_;
+    my ( $self, $msg, $max_len ) = @_;
 
     $msg =~ s{[^0-9a-zA-Z_,.\@:'"!/ =-]+}{}gxms;
 
     # Don't allow IRC like commands
     $msg =~ s{^\s*/+}{}gxms;
 
-    return substr($msg, 0, $max_len);
+    return substr( $msg, 0, $max_len );
 }
 
 # It's a lot more common to know the port than the session id
 # so virt_server is the port.
 sub get_listing {
-    my ($self, $virt_server) = @_;
+    my ( $self, $virt_server ) = @_;
 
-    if (!defined($virt_server)) {
-	$virt_server = 1;
+    if ( !defined($virt_server) ) {
+        $virt_server = 1;
     }
 
     my $result = {};
     my $res;
 
-    $res = $self->{$TS3}->use_server(undef, $virt_server);
-    if ($res->{result}->{id} != 0) {
-	return {};
+    $res = $self->{$TS3}->use_server( undef, $virt_server );
+    if ( $res->{result}->{id} != 0 ) {
+        return {};
     }
 
-    $res = $self->{$TS3}->client_list({ 'voice' => 1 });
-    if ($res->{result}->{id} != 0) {
-	return {};
+    $res = $self->{$TS3}->client_list( { 'voice' => 1 } );
+    if ( $res->{result}->{id} != 0 ) {
+        return {};
     }
 
     my %channels;
 
-    foreach my $user (@{$res->{params}}) {
-	# Skip any server query clients
-	if ($user->{client_type} != 0) {
-	    next;
-	}
-	my $id = $user->{cid};
+    foreach my $user ( @{ $res->{params} } ) {
 
-	if (! exists($channels{$id})) {
-	    $channels{$id}->{players} = [];
-	}
-	push(@{$channels{$id}->{players}}, { name => $user->{client_nickname}, in_mute => $user->{client_input_muted}, out_mute => $user->{client_output_muted} });
+        # Skip any server query clients
+        if ( $user->{client_type} != 0 ) {
+            next;
+        }
+        my $id = $user->{cid};
+
+        if ( !exists( $channels{$id} ) ) {
+            $channels{$id}->{players} = [];
+        }
+        push(
+            @{ $channels{$id}->{players} },
+            {
+                name     => $user->{client_nickname},
+                in_mute  => $user->{client_input_muted},
+                out_mute => $user->{client_output_muted}
+            }
+        );
     }
 
     $res = $self->{$TS3}->channel_list();
-    if ($res->{result}->{id} != 0) {
-	return {};
+    if ( $res->{result}->{id} != 0 ) {
+        return {};
     }
 
-    foreach my $chan (@{$res->{params}}) {
-	my ($id) = $chan->{cid};
+    foreach my $chan ( @{ $res->{params} } ) {
+        my ($id) = $chan->{cid};
 
-	# Don't worry about channels without players
-	if (exists($channels{$id})) {
-	    $channels{$id}->{name} = $chan->{channel_name};
-	}
+        # Don't worry about channels without players
+        if ( exists( $channels{$id} ) ) {
+            $channels{$id}->{name} = $chan->{channel_name};
+        }
     }
 
     $res = $self->{$TS3}->quit();
-    if ($res->{result}->{id} != 0) {
-	return {};
+    if ( $res->{result}->{id} != 0 ) {
+        return {};
     }
 
     return \%channels;

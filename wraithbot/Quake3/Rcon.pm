@@ -38,49 +38,56 @@ use version 0.77; our $VERSION = version->declare('v0.0.1');
 sub new {
     my ($class) = @_;
 
-    my $self = {
-    };
+    my $self = {};
 
-    bless($self, $class);
+    bless( $self, $class );
     return $self;
 }
 
 sub send_rcon {
-    my ($self, $settings, @commands) = @_;
+    my ( $self, $settings, @commands ) = @_;
 
-    my $socket = Quake3::Commands::Util->send_udp(undef, $settings->{host}, $settings->{port},
-						  Quake3::Rcon::Commands->generate_rcon($settings->{password}, join(q{ }, @commands)));
-    if (! defined($socket) || $socket eq q{}) {
-	cluck "Couldn't send the UDP packet";
-	return 0;
+    my $socket = Quake3::Commands::Util->send_udp(
+        undef,
+        $settings->{host},
+        $settings->{port},
+        Quake3::Rcon::Commands->generate_rcon(
+            $settings->{password}, join( q{ }, @commands )
+        )
+    );
+    if ( !defined($socket) || $socket eq q{} ) {
+        cluck "Couldn't send the UDP packet";
+        return 0;
     }
 
     my $rin = q{};
-    vec($rin, fileno($socket), 1) = 1;
+    vec( $rin, fileno($socket), 1 ) = 1;
 
     my ($rout);
-    while (select($rout = $rin, undef, undef, $settings->{timeout})) {
+    while ( select( $rout = $rin, undef, undef, $settings->{timeout} ) ) {
         my $result = Quake3::Commands::Util->receive_udp($socket);
-	if (! defined($result) || ! exists($result->{data})) {
-	    cluck "Invalid result received";
-	    return 0;
-	}
+        if ( !defined($result) || !exists( $result->{data} ) ) {
+            cluck "Invalid result received";
+            return 0;
+        }
 
-        my $msg = Quake3::Rcon::Commands->parse_rcon_response($result->{data});
-        if ($msg eq q{}) {
+        my $msg =
+          Quake3::Rcon::Commands->parse_rcon_response( $result->{data} );
+        if ( $msg eq q{} ) {
             return 1;
 
-        } else {
+        }
+        else {
             cluck "Rcon failed: $msg\n";
             return 0;
         }
     }
 
-    if (defined($socket)) {
-	if (! close($socket)) {
-	    cluck "Couldn't close the socket";
-	    return 0;
-	}
+    if ( defined($socket) ) {
+        if ( !close($socket) ) {
+            cluck "Couldn't close the socket";
+            return 0;
+        }
     }
 
     # Assuming it is ok
@@ -92,8 +99,7 @@ sub test_me {
 
     cluck "Do nothing for now\n";
 
-   return 1;
+    return 1;
 }
-
 
 1;

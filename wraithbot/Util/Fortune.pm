@@ -30,39 +30,43 @@ use IPC::System::Simple qw(capturex);
 
 use Readonly;
 
-use version 0.77;  our $VERSION = version->declare('v0.0.1');
+use version 0.77; our $VERSION = version->declare('v0.0.1');
 
 # You shouldn't need to change these
-Readonly our $FORTUNE_COMMAND    => '/usr/games/fortune';
-Readonly our $FORTUNE_SHORT      => '-s';
-Readonly our $FORTUNE_OFFENSIVE  => '-o';
+Readonly our $FORTUNE_COMMAND   => '/usr/games/fortune';
+Readonly our $FORTUNE_SHORT     => '-s';
+Readonly our $FORTUNE_OFFENSIVE => '-o';
 
 sub new {
     my ($class) = @_;
 
-    my $self = {
-    };
+    my $self = {};
 
-    bless($self, $class);
+    bless( $self, $class );
     return $self;
 }
 
 sub fortune {
-    my ($class, $off) = @_;
-    if (! defined($off)) {
+    my ( $class, $off ) = @_;
+    if ( !defined($off) ) {
         $off = 0;
     }
 
     my @output;
     eval {
-	if (! -f $FORTUNE_COMMAND) {
-	    @output = ('fortune: command not found');
+        if ( !-f $FORTUNE_COMMAND )
+        {
+            @output = ('fortune: command not found');
 
-	} elsif ($off) {
-            @output = capturex([0],  $FORTUNE_COMMAND, $FORTUNE_SHORT, $FORTUNE_OFFENSIVE);
+        }
+        elsif ($off) {
+            @output =
+              capturex( [0], $FORTUNE_COMMAND, $FORTUNE_SHORT,
+                $FORTUNE_OFFENSIVE );
 
-        } else {
-            @output = capturex([0], $FORTUNE_COMMAND, $FORTUNE_SHORT);
+        }
+        else {
+            @output = capturex( [0], $FORTUNE_COMMAND, $FORTUNE_SHORT );
         }
     } || return ("fortune: command failed");
 

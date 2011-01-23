@@ -28,88 +28,96 @@ use Carp qw(cluck);
 
 use Readonly;
 
-use version 0.77;  our $VERSION = version->declare('v0.0.1');
+use version 0.77; our $VERSION = version->declare('v0.0.1');
 
 Readonly my $QUOTES => 'quotes';
 
 sub new {
-    my ($arg, @args) = @_;
+    my ( $arg, @args ) = @_;
     my $class = ref($arg) || $arg;
 
     my $self = {
-	quotes => undef,
-	file   => $args[0],
+        quotes => undef,
+        file   => $args[0],
     };
 
-    bless($self, $class);
-    $self->reload_quotes($self->{file});
+    bless( $self, $class );
+    $self->reload_quotes( $self->{file} );
     return $self;
 }
 
 sub get_quotes {
-    my ($class, $file) = @_;
+    my ( $class, $file ) = @_;
 
     my $fh;
-    if (! open($fh, '<', $file)) {
-	cluck qq{Couldn't open the "} . $file . qq{" file.  No servers loaded: $!};
-	return {};
+    if ( !open( $fh, '<', $file ) ) {
+        cluck qq{Couldn't open the "} . $file
+          . qq{" file.  No servers loaded: $!};
+        return {};
     }
     my @lines = <$fh>;
-    if (! close($fh)) {
-	cluck qq{Couldn't close the "} . $file . qq{" file: $!};
-	return {};
+    if ( !close($fh) ) {
+        cluck qq{Couldn't close the "} . $file . qq{" file: $!};
+        return {};
     }
 
-    my $user = undef;
+    my $user    = undef;
     my $current = [];
-    my $hash = {};
+    my $hash    = {};
     for my $line (@lines) {
-	chomp($line);
+        chomp($line);
 
-	if ($line =~ m{^\s*(\#.*)$}ixms) {
-	    # Skip comments but not blank lines as those are used between entries
+        if ( $line =~ m{^\s*(\#.*)$}ixms ) {
 
-	} elsif ($line =~ m{^(\S+)\s*$}ixms) {
-	    my $new_user = $1;
+           # Skip comments but not blank lines as those are used between entries
 
-	    # User may have omitted the extra blank line
-	    if (@{$current}) {
-		push(@{$hash->{$user}}, $current);
-	    }
-	    $current = [];
-	    $user = $new_user;
+        }
+        elsif ( $line =~ m{^(\S+)\s*$}ixms ) {
+            my $new_user = $1;
 
-	} elsif ($line =~ m{^\s*$}ixms) {
-	    # After the last line for the quote
-	    if (@{$current}) {
-		push(@{$hash->{$user}}, $current);
-	    }
-	    $current = [];
+            # User may have omitted the extra blank line
+            if ( @{$current} ) {
+                push( @{ $hash->{$user} }, $current );
+            }
+            $current = [];
+            $user    = $new_user;
 
-	} elsif ($line =~ m{^\s+(.+)\s*$}ixms) {
-	    push(@{$current}, $1);
+        }
+        elsif ( $line =~ m{^\s*$}ixms ) {
 
-	} else {
-	    print "Unrecognized line: $line";
-	}
+            # After the last line for the quote
+            if ( @{$current} ) {
+                push( @{ $hash->{$user} }, $current );
+            }
+            $current = [];
+
+        }
+        elsif ( $line =~ m{^\s+(.+)\s*$}ixms ) {
+            push( @{$current}, $1 );
+
+        }
+        else {
+            print "Unrecognized line: $line";
+        }
     }
 
     # Last line may have been an entry
-    if (@{$current}) {
-	push(@{$hash->{$user}}, $current);
+    if ( @{$current} ) {
+        push( @{ $hash->{$user} }, $current );
     }
 
     return $hash;
 }
 
 sub reload_quotes {
-    my ($self, $new_file) = @_;
+    my ( $self, $new_file ) = @_;
 
-    if (defined($new_file)) {
-	$self->{quotes} = $self->get_quotes($new_file);
+    if ( defined($new_file) ) {
+        $self->{quotes} = $self->get_quotes($new_file);
 
-    } else {
-	$self->{quotes} = $self->get_quotes($self->{file});
+    }
+    else {
+        $self->{quotes} = $self->get_quotes( $self->{file} );
     }
 
     return 1;
@@ -120,28 +128,29 @@ sub get_quote_status {
 
     my $msg = "Available: ";
     my @names;
-    foreach my $key (sort(keys(%{$self->{$QUOTES}}))) {
-        push(@names, $key . "ism(" . ($#{$self->{$QUOTES}->{$key}} + 1) . ")");
+    foreach my $key ( sort( keys( %{ $self->{$QUOTES} } ) ) ) {
+        push( @names,
+            $key . "ism(" . ( $#{ $self->{$QUOTES}->{$key} } + 1 ) . ")" );
     }
 
-    return $msg . join(", ", @names);
+    return $msg . join( ", ", @names );
 }
 
 sub get_ism {
-    my ($self, $name) = @_;
+    my ( $self, $name ) = @_;
 
     return $self->get_random_quote($name);
 }
 
 sub get_random_quote {
-    my ($self, $name) = @_;
+    my ( $self, $name ) = @_;
 
-    if (! exists($self->{$QUOTES}->{$name})) {
-	return "";
+    if ( !exists( $self->{$QUOTES}->{$name} ) ) {
+        return "";
     }
 
-    my $num_quotes = $#{$self->{$QUOTES}->{$name}} + 1;
-    my $index = int(rand($num_quotes));
+    my $num_quotes = $#{ $self->{$QUOTES}->{$name} } + 1;
+    my $index      = int( rand($num_quotes) );
 
     return $self->{$QUOTES}->{$name}->[$index];
 }

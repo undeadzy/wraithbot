@@ -27,57 +27,57 @@ use warnings;
 
 use Carp;
 
-use version 0.77;  our $VERSION = version->declare('v0.0.1');
+use version 0.77; our $VERSION = version->declare('v0.0.1');
 
 sub new {
-    my ($obclass, $name, $timer, $ops) = @_;
+    my ( $obclass, $name, $timer, $ops ) = @_;
     my $class = ref($obclass) || $obclass;
 
-    if (!defined($name) || $name =~ m{^\s*$}xms) {
-	croak qq{Invalid input name};
+    if ( !defined($name) || $name =~ m{^\s*$}xms ) {
+        croak qq{Invalid input name};
     }
-    if (!defined($timer) || $timer !~ m{^\d+$}xms) {
-	croak qq{Invalid input timer};
+    if ( !defined($timer) || $timer !~ m{^\d+$}xms ) {
+        croak qq{Invalid input timer};
     }
-    if (!defined($ops) || $ops !~ m{^[01]$}xms) {
-	croak qq{Invalid input ops};
+    if ( !defined($ops) || $ops !~ m{^[01]$}xms ) {
+        croak qq{Invalid input ops};
     }
 
     my $self = {
-	name  => $name,
-	timer => $timer,
-	ops   => $ops,
+        name  => $name,
+        timer => $timer,
+        ops   => $ops,
     };
 
-    bless($self, $class);
+    bless( $self, $class );
     return $self;
 }
 
 sub name {
-    my ($self, $val) = @_;
+    my ( $self, $val ) = @_;
 
-    if (defined($val) && $val !~ /^\s*$/xms) {
-	$self->{name} = $val;
+    if ( defined($val) && $val !~ /^\s*$/xms ) {
+        $self->{name} = $val;
     }
 
     return $self->{name};
 }
 
 sub timer {
-    my ($self, $val) = @_;
+    my ( $self, $val ) = @_;
 
-    if (defined($val) && $val =~ /^\d+$/xms) {
-	$self->{timer} = $val;
+    if ( defined($val) && $val =~ /^\d+$/xms ) {
+        $self->{timer} = $val;
     }
 
     return $self->{timer};
 }
 
 sub ops {
-    my ($self, $val) = @_;
+    my ( $self, $val ) = @_;
 
-    if (defined($val) && $val =~ /^[01]$/xms) {
-	$self->{ops} = $val;
+    if ( defined($val) && $val =~ /^[01]$/xms ) {
+        $self->{ops} = $val;
     }
 
     return $self->{ops};

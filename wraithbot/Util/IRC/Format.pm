@@ -26,59 +26,63 @@ use strict;
 use warnings;
 use Carp;
 
-use version 0.77;  our $VERSION = version->declare('v0.0.1');
+use version 0.77; our $VERSION = version->declare('v0.0.1');
 
 sub new {
     my ($obclass) = @_;
     my $class = ref($obclass) || $obclass;
 
-    my $self = {
-    };
+    my $self = {};
 
-    bless($self, $class);
+    bless( $self, $class );
     return $self;
 }
 
 # Expects a 2D array
 sub align {
-    my ($class, $lines) = @_;
+    my ( $class, $lines ) = @_;
 
     my @save;
     my %max_size;
-    for my $i (0 .. $#{$lines}) {
-	# Get the max
-	for my $j (0 .. $#{$lines->[$i]}) {
-	    my $check = length($lines->[$i][$j]);
-	    if (! exists($max_size{$j}) || $check > $max_size{$j}) {
-		$max_size{$j} = $check;
-	    }
-	}
+    for my $i ( 0 .. $#{$lines} ) {
+
+        # Get the max
+        for my $j ( 0 .. $#{ $lines->[$i] } ) {
+            my $check = length( $lines->[$i][$j] );
+            if ( !exists( $max_size{$j} ) || $check > $max_size{$j} ) {
+                $max_size{$j} = $check;
+            }
+        }
     }
 
-    for my $line (@{$lines}) {
-	my @tmp;
+    for my $line ( @{$lines} ) {
+        my @tmp;
 
-	if (ref($line) eq 'ARRAY') {
-	    for my $i (0 .. $#{$line}) {
-		if ($i == 0) {
-		    my $max = $max_size{$i};
-		    push(@tmp, sprintf("%-${max}.${max}s", $line->[$i]));
+        if ( ref($line) eq 'ARRAY' ) {
+            for my $i ( 0 .. $#{$line} ) {
+                if ( $i == 0 ) {
+                    my $max = $max_size{$i};
+                    push( @tmp, sprintf( "%-${max}.${max}s", $line->[$i] ) );
 
-		} elsif ($i < $#{$line}) {
-		    my $max = $max_size{$i};
-		    push(@tmp, sprintf("%${max}.${max}s", $line->[$i]));
+                }
+                elsif ( $i < $#{$line} ) {
+                    my $max = $max_size{$i};
+                    push( @tmp, sprintf( "%${max}.${max}s", $line->[$i] ) );
 
-		} else {
-		    # Dont' adjust the last entry
-		    push(@tmp, $line->[$i]);
-		}
-	    }
-	    push(@save, join("", @tmp));
+                }
+                else {
 
-	} else {
-	    my $max = $max_size{0};
-	    push(@save, sprintf("%${max}.${max}s", $line));
-	}
+                    # Dont' adjust the last entry
+                    push( @tmp, $line->[$i] );
+                }
+            }
+            push( @save, join( "", @tmp ) );
+
+        }
+        else {
+            my $max = $max_size{0};
+            push( @save, sprintf( "%${max}.${max}s", $line ) );
+        }
     }
 
     return @save;

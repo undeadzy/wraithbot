@@ -55,11 +55,11 @@ Readonly our $TYPE_GAME => {
     8 => 'BOMB',
 };
 
-Readonly our $CVAR_MIN_SKILL       => 'minskill';
-Readonly our $CVAR_SV_HOSTNAME     => 'sv_hostname';
+Readonly our $CVAR_MIN_SKILL   => 'minskill';
+Readonly our $CVAR_SV_HOSTNAME => 'sv_hostname';
 
 sub new {
-    my ($check, @args) = @_;
+    my ( $check, @args ) = @_;
     my $class = ref($check) || $check;
 
     my $self = {
@@ -67,113 +67,121 @@ sub new {
         file  => $args[0],
     };
 
-    bless($self, $class);
+    bless( $self, $class );
 
     $self->reload_clans();
     return $self;
 }
 
 sub reload_clans {
-    my ($self, $file) = @_;
+    my ( $self, $file ) = @_;
     my $target;
 
-    if (defined($file)) {
+    if ( defined($file) ) {
         $target = $file;
-    } else {
+    }
+    else {
         $target = $self->{file};
     }
 
-    if (! -f $target) {
-	cluck qq{Couldn't load "$target": $!};
-	return 0;
+    if ( !-f $target ) {
+        cluck qq{Couldn't load "$target": $!};
+        return 0;
     }
 
-    my ($fh, @lines);
-    if (! open($fh, '<', $target)) {
+    my ( $fh, @lines );
+    if ( !open( $fh, '<', $target ) ) {
         cluck qq{Couldn't load "$target": $!};
         return 0;
 
-    } else {
+    }
+    else {
         @lines = <$fh>;
-        if (! close($fh)) {
+        if ( !close($fh) ) {
             cluck qq{Couldn't close "$target": $!};
-	    return 0;
+            return 0;
         }
     }
 
     $self->{clans} = {};
 
     for my $line (@lines) {
-	chomp($line);
+        chomp($line);
 
-	if ($line =~ m{^\s*(\#.*)?$}ixms) {
-	    # Skip comments
+        if ( $line =~ m{^\s*(\#.*)?$}ixms ) {
 
-	} elsif ($line =~ m{^\s*(.+)\t+(.+)\s*$}ixms) {
-	    my ($name, $regex) = ($1, $2);
+            # Skip comments
 
-	    $name =~ s{^\s+}{}xms;
-	    $name =~ s{\s+$}{}xms;
+        }
+        elsif ( $line =~ m{^\s*(.+)\t+(.+)\s*$}ixms ) {
+            my ( $name, $regex ) = ( $1, $2 );
 
-	    $regex =~ s{\s+$}{}xms;
-	    $regex =~ s{^\s+}{}xms;
+            $name =~ s{^\s+}{}xms;
+            $name =~ s{\s+$}{}xms;
 
-	    $self->{clans}->{$name} = qr{$regex}xms;
+            $regex =~ s{\s+$}{}xms;
+            $regex =~ s{^\s+}{}xms;
 
-	} else {
-	    print "Unrecognized line: $line";
-	}
+            $self->{clans}->{$name} = qr{$regex}xms;
+
+        }
+        else {
+            print "Unrecognized line: $line";
+        }
     }
 
     return 1;
 }
 
 sub get_game_type {
-    my ($self, $settings) = @_;
+    my ( $self, $settings ) = @_;
 
-    if (! exists($settings->{settings})) {
+    if ( !exists( $settings->{settings} ) ) {
         cluck "Couldn't find settings";
         return "N/A";
     }
 
-    my @keys = keys(%{$settings->{settings}});
+    my @keys = keys( %{ $settings->{settings} } );
 
     my $name = $Quake3::Commands::Util::CVAR_GAME_TYPE;
-    my ($gametype) = grep { /^${name}$/ixms }     @keys;
-    if (!defined($gametype) || $gametype eq "") {
-	cluck "Couldn't find the game type setting";
-	return "";
+    my ($gametype) = grep { /^${name}$/ixms } @keys;
+    if ( !defined($gametype) || $gametype eq "" ) {
+        cluck "Couldn't find the game type setting";
+        return "";
     }
 
     my $value = $settings->{settings}->{$gametype};
-    if (defined ($value) && $value =~ /^\d+$/ixms) {
-        if (exists ($TYPE_GAME->{$value})) {
+    if ( defined($value) && $value =~ /^\d+$/ixms ) {
+        if ( exists( $TYPE_GAME->{$value} ) ) {
             return $TYPE_GAME->{$value};
 
-        } else {
+        }
+        else {
             return $value;
         }
 
-    } else {
-	cluck "Couldn't find the game type";
+    }
+    else {
+        cluck "Couldn't find the game type";
         return "";
     }
 }
 
 sub get_min_skill {
-    my ($self, $settings) = @_;
+    my ( $self, $settings ) = @_;
 
-    if (! exists($settings->{settings})) {
+    if ( !exists( $settings->{settings} ) ) {
         cluck "Couldn't find settings";
         return "N/A";
     }
 
-    my @keys = keys(%{$settings->{settings}});
+    my @keys = keys( %{ $settings->{settings} } );
     my ($min_skill) = grep { /^${CVAR_MIN_SKILL}$/ixms } @keys;
 
-    if (defined($min_skill) && exists ($settings->{settings}->{$min_skill})) {
+    if ( defined($min_skill) && exists( $settings->{settings}->{$min_skill} ) )
+    {
         my $value = $settings->{settings}->{$min_skill};
-        if (defined ($value) && $value =~ /^\d{1,10}$/ixms) {
+        if ( defined($value) && $value =~ /^\d{1,10}$/ixms ) {
             return $value;
         }
     }
@@ -182,24 +190,34 @@ sub get_min_skill {
 }
 
 sub get_avg_skill {
-    my ($self, $settings) = @_;
+    my ( $self, $settings ) = @_;
 
-    if (! exists($settings->{settings})) {
+    if ( !exists( $settings->{settings} ) ) {
         cluck "Couldn't find settings";
         return "N/A";
     }
 
-    my @keys = keys(%{$settings->{settings}});
+    my @keys = keys( %{ $settings->{settings} } );
     my ($sv_hostname) = grep { /^${CVAR_SV_HOSTNAME}$/ixms } @keys;
 
-    if (defined($sv_hostname) && exists($settings->{settings}->{$sv_hostname})) {
+    if ( defined($sv_hostname)
+        && exists( $settings->{settings}->{$sv_hostname} ) )
+    {
         my $value = $settings->{settings}->{$sv_hostname};
 
-        # It would be nice if these were cvars.  It's only in the title currently...
-        if (defined ($value) && $value =~ m{^\s*Z\^\d\s+Best\s+\^\dof\s+\^\dZ\^\d\s+(?:\S+)\s+\^\d(\d+)\s*$}ixms) {
+    # It would be nice if these were cvars.  It's only in the title currently...
+        if ( defined($value)
+            && $value =~
+m{^\s*Z\^\d\s+Best\s+\^\dof\s+\^\dZ\^\d\s+(?:\S+)\s+\^\d(\d+)\s*$}ixms
+          )
+        {
             return $1;
 
-        } elsif (defined ($value) && $value =~ m{^\s*\^\dWest\s+\^\dof\s+\^\dZ\^\d\s+(?:\S+)\s+\^\d(\d+)\s*$}ixms) {
+        }
+        elsif ( defined($value)
+            && $value =~
+            m{^\s*\^\dWest\s+\^\dof\s+\^\dZ\^\d\s+(?:\S+)\s+\^\d(\d+)\s*$}ixms )
+        {
             return $1;
         }
     }
@@ -208,31 +226,34 @@ sub get_avg_skill {
 }
 
 sub get_player_description {
-    my ($self, $settings) = @_;
+    my ( $self, $settings ) = @_;
 
-    if (! defined($settings) || ref($settings) ne 'HASH'
-        || ! exists($settings->{players})) {
+    if (  !defined($settings)
+        || ref($settings) ne 'HASH'
+        || !exists( $settings->{players} ) )
+    {
         cluck "Couldn't find players";
         return "N/A";
     }
 
     my %results;
-    foreach my $p (sort { lc($a) cmp lc($b) } @{$settings->{players}}) {
-        if ($p->{ping} <= 3) {
-            if (! exists($results{bots})) {
+    foreach my $p ( sort { lc($a) cmp lc($b) } @{ $settings->{players} } ) {
+        if ( $p->{ping} <= 3 ) {
+            if ( !exists( $results{bots} ) ) {
                 $results{bots} = 0;
             }
             $results{bots}++;
             next;
         }
 
-        while (my ($k,$v) = each %{$self->{clans}}) {
+        while ( my ( $k, $v ) = each %{ $self->{clans} } ) {
+
             # Remove colors like ^4 and ^7
             my $tmp = $p->{name};
             $tmp =~ s{\^(\d|[FfbBnNXx])}{}gxms;
 
-            if ($tmp =~ m{$v}xms) {
-                if (! exists($results{$k})) {
+            if ( $tmp =~ m{$v}xms ) {
+                if ( !exists( $results{$k} ) ) {
                     $results{$k} = 0;
                 }
                 $results{$k}++;
@@ -242,30 +263,32 @@ sub get_player_description {
 
     my @msgs;
     my $min_skill = $self->get_min_skill($settings);
-    if ($min_skill > 0) {
-	push(@msgs, q{[minSkill=} . ${min_skill} . q{]});
+    if ( $min_skill > 0 ) {
+        push( @msgs, q{[minSkill=} . ${min_skill} . q{]} );
     }
 
     my $avg_skill = $self->get_avg_skill($settings);
-    if ($avg_skill > 0) {
-	push(@msgs, q{[avgSkill=} . ${avg_skill} . q{]});
+    if ( $avg_skill > 0 ) {
+        push( @msgs, q{[avgSkill=} . ${avg_skill} . q{]} );
     }
 
-    foreach my $clan (sort(keys(%results))) {
-        if ($clan eq 'bots') {
-            if ($results{$clan} == 1) {
-                push(@msgs, "$results{$clan} bot");
+    foreach my $clan ( sort( keys(%results) ) ) {
+        if ( $clan eq 'bots' ) {
+            if ( $results{$clan} == 1 ) {
+                push( @msgs, "$results{$clan} bot" );
 
-            } else {
-                push(@msgs, "$results{$clan} bots");
+            }
+            else {
+                push( @msgs, "$results{$clan} bots" );
             }
 
-        } else {
-            push(@msgs, "$results{$clan} $clan");
+        }
+        else {
+            push( @msgs, "$results{$clan} $clan" );
         }
     }
 
-    return join(", ", @msgs);
+    return join( ", ", @msgs );
 }
 
 sub test_me {
@@ -273,20 +296,21 @@ sub test_me {
 
     my $settings = {
         players => [
-                    { ping => 0, score => 24, name => "iamabot" },
-                    { ping => 0, score => 24, name => "iamabot2" },
-                    { ping => 100, score => 22, name => "human" },
-                   ],
+            { ping => 0,   score => 24, name => "iamabot" },
+            { ping => 0,   score => 24, name => "iamabot2" },
+            { ping => 100, score => 22, name => "human" },
+        ],
     };
 
     my $result = $self->get_player_description($settings);
-    print Dumper($settings, $result);
+    print Dumper( $settings, $result );
 
     # Now test inherited methods
     my $servers = {
         "206.217.142.38:27960" => { name => "iCu* private" },
         "74.207.235.61:27961"  => { name => "UrT East" },
-#    "72.26.196.178:27960"  => { name => "Best of the Best" },
+
+        #    "72.26.196.178:27960"  => { name => "Best of the Best" },
         "64.156.192.169:27963" => { name => "wTf San Diego" },
         "8.6.15.92:27960"      => { name => "Spray and Pray" },
     };
