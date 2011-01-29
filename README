@@ -119,6 +119,15 @@ error id=2568 msg=insufficient\sclient\spermissions failed_permid=8474
 quit
 Connection closed by foreign host.
 
+You may also see this situation depending on the permissions:
+
+me@wraithbot:~/github/wraithbot/wraithbot$ telnet W.X.Y.Z 10011
+Trying W.X.Y.Z...
+Connected to W.X.Y.Z.
+Escape character is '^]'.
+
+and then it hangs there.  In either case, change these permissions and it should work.
+
 
 To enable permissions for guests, use these in the GUI:
 
