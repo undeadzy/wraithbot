@@ -97,6 +97,53 @@ as this will unload everything.  If you only do:
 then it doesn't unload everything because we're loading modules.
 
 
+TS3 SETUP
+---------
+
+If you know the client port and server query port, you can add TS3 servers
+to the list.
+
+Here's how you can check.  This is an example of a server with a functioning
+server query but insufficient permissions for guests.
+
+me@wraithbot:~/github/wraithbot/wraithbot$ telnet W.X.Y.Z 10011
+Trying W.X.Y.Z...
+Connected to W.X.Y.Z.
+Escape character is '^]'.
+TS3
+Welcome to the TeamSpeak 3 ServerQuery interface, type "help" for a list of commands and "help <command>" for information on a specific command.
+use port=9987
+error id=0 msg=ok
+clientlist
+error id=2568 msg=insufficient\sclient\spermissions failed_permid=8474
+quit
+Connection closed by foreign host.
+
+
+To enable permissions for guests, use these in the GUI:
+
+Permissions -> Server Groups -> Guest
+
+On the right side, select Permissions (Detailed) -> Virtual Server -> Information
+
+and enable these:
+
+View virtual server info
+View virtual server connection info
+View list of existing channels
+View list of clients online
+
+
+LIMITATIONS
+-----------
+
+I deliberately use IPs rather than hostnames in all areas.  This is because I
+didn't want someone to change their DNS entry to point to another IP and have
+the bot try to connect to it.
+
+It only supports TS3 currently because that's what 90% of the UrT clans use.
+
+
 NOTES
 -----
 
