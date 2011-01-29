@@ -735,14 +735,9 @@ sub handle_actions {
                 @lines = $ts3->irc_listing( $TS3->{$found}->{client_port} );
             }
               || send_bold_msg( $server, $target, $is_commandline,
-                "TS3 server failed" );
+                "[Server empty]" );
 
-            if ( $#lines < 0 ) {
-                send_bold_msg( $server, $target, $is_commandline,
-                    "No data returned" );
-
-            }
-            else {
+            if ( $#lines >= 0 ) {
                 my $max_line = $#lines > 8 ? 8 : $#lines;
                 for ( my $i = 0 ; $i <= $max_line ; $i++ ) {
                     send_bold_msg( $server, $target, $is_commandline,
