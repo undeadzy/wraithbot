@@ -33,16 +33,22 @@
 # error id=0 msg=ok
 # Connection closed by foreign host.
 # host$
+#
+# If you get an error message about invalid permissions, tell the server admin
+# to see the toplevel README in this project.  It shows the necessary permissions.
 
 # name         IP          client_port   query_port
 
-# Cake renamed back to ven
+# Cake renamed back to ven but leave both
 ven         66.55.149.29       9160         9100
+cake        66.55.149.29       9160         9100
 iCu*      173.45.231.242       9987        10011
 b00bs     188.138.48.106       9987        10011
 NRG       207.192.73.103       9987        10011
 eVo       216.52.143.226       9987        10011
 urteast    74.207.235.61       9987        10011
+GlaD       63.209.37.190       9123         9100
 
-# Insufficient permissions on pugbot.
-#pugbot    208.93.223.132       9987        10011
+# Insufficient permissions on these.
+# pugbot    208.93.223.132       9987        10011
+# no          68.71.61.194       9987        10011
