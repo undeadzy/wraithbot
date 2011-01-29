@@ -56,9 +56,17 @@ sub new {
 sub irc_listing {
     my ( $self, $virt_server ) = @_;
 
-    my $result = $self->get_listing($virt_server);
+    my $result;
+    eval {
+        $result = $self->get_listing($virt_server);
+    } || return ("Failed to connect to server",);
 
-    my $msg = $self->_get_irc_message($result);
+    if ($result->{msg} ne "") {
+        print "Returning $result->{msg}\n";
+        return ($result->{msg}, );
+    }
+
+    my $msg = $self->_get_irc_message($result->{welcome}, $result->{channels});
 
     local ($Text::Wrap::columns) = 400;
     my $split_msg = wrap( "", "", $msg );
@@ -68,8 +76,9 @@ sub irc_listing {
 }
 
 sub _get_irc_message {
-    my ( $self, $results ) = @_;
+    my ( $self, $welcome, $results ) = @_;
 
+    my $start = "" . $self->_sanitize( $welcome, 100 ) . "\n";
     my $string = "";
     for my $id (
         sort { lc( $results->{$a}->{name} ) cmp lc( $results->{$b}->{name} ) }
@@ -86,7 +95,11 @@ sub _get_irc_message {
         $string .= join( ", ", @names ) . "]\n";
     }
 
-    return $string;
+    if ($string eq "") {
+        return $start . "[Server empty]\n";
+    }
+
+    return $start . $string;
 }
 
 sub _mute_status {
@@ -131,17 +144,18 @@ sub get_listing {
         $virt_server = 1;
     }
 
+    my $welcome = "";
     my $result = {};
     my $res;
 
     $res = $self->{$TS3}->use_server( undef, $virt_server );
     if ( $res->{result}->{id} != 0 ) {
-        return {};
+        return { msg => "Error connecting to virtual server", channels => {}, welcome => $welcome };
     }
 
     $res = $self->{$TS3}->client_list( { 'voice' => 1 } );
     if ( $res->{result}->{id} != 0 ) {
-        return {};
+        return { msg => "Error running clientlist", channels => {}, welcome => $welcome };
     }
 
     my %channels;
@@ -169,7 +183,7 @@ sub get_listing {
 
     $res = $self->{$TS3}->channel_list();
     if ( $res->{result}->{id} != 0 ) {
-        return {};
+        return { msg => "Error running channellist", channels => {}, welcome => $welcome };
     }
 
     foreach my $chan ( @{ $res->{params} } ) {
@@ -181,12 +195,23 @@ sub get_listing {
         }
     }
 
-    $res = $self->{$TS3}->quit();
+    $res = $self->{$TS3}->server_info();
     if ( $res->{result}->{id} != 0 ) {
-        return {};
+        return { msg => "Error running serverinfo", channels => {}, welcome => $welcome };
     }
 
-    return \%channels;
+    foreach my $virt ( @{ $res->{params} } ) {
+       if ( exists( $virt->{virtualserver_welcomemessage} )) {
+           $welcome = $virt->{virtualserver_welcomemessage};
+       }
+    }
+
+    $res = $self->{$TS3}->quit();
+    if ( $res->{result}->{id} != 0 ) {
+        return { msg => "Error running quit", channels => {}, welcome => $welcome };
+    }
+
+    return { msg => "", channels => \%channels, welcome => $welcome };
 }
 
 1;

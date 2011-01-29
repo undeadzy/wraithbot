@@ -148,14 +148,16 @@ my $AUTH = Util::IRC::Auth->new();
 my $TS3_AUTH = Util::IRC::Auth->new( { delay => 3 } );
 
 for my $type ( $AUTH, $TS3_AUTH ) {
-    $type->add_private_channel( "#icuclan", 1 );
+    $type->add_private_channel( "#icuclan",  1 );
+    $type->add_private_channel( "#vex-priv", 1 );
 
-    #
-    $type->add_public_channel( "#icu",             1 );
     $type->add_public_channel( "#ftwgl",           1 );
+    $type->add_public_channel( "#icu",             1 );
+    $type->add_public_channel( "#clan-vex",        1 );
     $type->add_public_channel( "#team-veneration", 0 );
     $type->add_public_channel( "#cakeclan",        0 );
-    $type->add_public_channel( "#clan-vex",        0 );
+
+  # Testing channel
     $type->add_public_channel( "#urtpub",          0 );
 
   # These are special users that are always trusted.  Since they are +x
@@ -729,16 +731,12 @@ sub handle_actions {
         elsif ( $match == 1 ) {
             my @lines;
 
-            eval {
-                my $ts3 = Util::TS3::Wrapper->new( $TS3->{$found}->{ip},
-                    $TS3->{$found}->{query_port} );
-                @lines = $ts3->irc_listing( $TS3->{$found}->{client_port} );
-            }
-              || send_bold_msg( $server, $target, $is_commandline,
-                "[Server empty]" );
+            my $ts3 = Util::TS3::Wrapper->new( $TS3->{$found}->{ip},
+                      $TS3->{$found}->{query_port} );
+            @lines = $ts3->irc_listing( $TS3->{$found}->{client_port} );
 
             if ( $#lines >= 0 ) {
-                my $max_line = $#lines > 8 ? 8 : $#lines;
+                my $max_line = $#lines > 15 ? 15 : $#lines;
                 for ( my $i = 0 ; $i <= $max_line ; $i++ ) {
                     send_bold_msg( $server, $target, $is_commandline,
                         $lines[$i] );
