@@ -78,6 +78,9 @@ sub irc_listing {
 sub _get_irc_message {
     my ( $self, $welcome, $results ) = @_;
 
+    # Remove bbcode (partial support)
+    $welcome =~ s{\[/?(url|code)\]}{ }gixms;
+
     my $start = "" . $self->_sanitize( $welcome, 100 ) . "\n";
     my $string = "";
     for my $id (

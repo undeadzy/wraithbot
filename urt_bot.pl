@@ -144,8 +144,8 @@ Readonly my $QUOTES =>
 # Setup all of the authorization
 my $AUTH = Util::IRC::Auth->new();
 
-# TS3 commands need at least 3 seconds between calls.
-my $TS3_AUTH = Util::IRC::Auth->new( { delay => 3 } );
+# TS3 commands need at least 2 seconds between calls.
+my $TS3_AUTH = Util::IRC::Auth->new( { delay => 2 } );
 
 for my $type ( $AUTH, $TS3_AUTH ) {
     $type->add_private_channel( "#icuclan",  1 );

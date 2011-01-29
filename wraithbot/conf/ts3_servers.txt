@@ -36,6 +36,8 @@
 #
 # If you get an error message about invalid permissions, tell the server admin
 # to see the toplevel README in this project.  It shows the necessary permissions.
+#
+# The default query port is 10011.  For gameservers.com, it is 9100.
 
 # name         IP          client_port   query_port
 
@@ -49,6 +51,8 @@ eVo       216.52.143.226       9987        10011
 urteast    74.207.235.61       9987        10011
 GlaD       63.209.37.190       9123         9100
 no          68.71.61.194       9987        10011
+LKBF       66.55.142.230       9164         9100
+NN       209.246.143.232       9122         9100
 
 # Insufficient permissions on these.
 # pugbot    208.93.223.132       9987        10011
