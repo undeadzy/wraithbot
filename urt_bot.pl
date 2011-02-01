@@ -85,7 +85,7 @@ Readonly my $BOT_PREFIX => '[!\@,.]';
 
 # Yeah all of this screams a plugin system but I'm done with this...
 Readonly my $HELP_MESSAGE =>
-q{Available commands (restricted to certain servers): !ts, !ctf, !bomb, !servers_status, !players <server name|IP>, !meow, !rawr, !fortune, !fortune_off, !isms, !gtv, !gtv_ip, !gtv_msg, !ts3 list, !ts3 <server alias> [admin: !gtv <ip:port> <msg>, !gtv_ip <ip:port>, !gtv_msg <msg>] [owner: !reload <ts3|clans|servers>]};
+q{Available commands (restricted to certain servers): !ts, !ctf, !bomb, !servers_status, !players <server name|IP>, !meow, !rawr, !fortune, !fortune_off, !isms, !gtv, !gtv_ip, !gtv_msg, !ts3 list, !ts3 <server alias> [admin: !gtv <ip:port> <msg>, !gtv_ip <ip:port>, !gtv_msg <msg>] [owner: !mute, !unmute, !reload <ts3|clans|servers>]};
 
 Readonly my $MEOW_RESPONSE => q{MEEOOOWW};
 Readonly my $RAWR_RESPONSE => q{RRAAWWWRRR};
@@ -131,6 +131,7 @@ Irssi::settings_add_str( "misc", $QUOTES_FILE,
 # because commands like !players will match on the prefix.
 my $SERVERS = get_server_list();
 my $TS3     = get_ts3_list();
+my $MUTE    = 0;
 
 Readonly my $URT => Quake3::Commands::Util::UrbanTerror->new(
     Irssi::settings_get_str($CLAN_FILE) );
@@ -161,9 +162,11 @@ for my $type ( $AUTH, $TS3_AUTH ) {
     $type->add_public_channel( "#urtpub",          0 );
 
   # These are special users that are always trusted.  Since they are +x
-  # modes, it requires that someone logs in with either my account or the bot's.
+  # modes, it requires that someone logs in with either my account, Megan's or
+  # the bot's.
     $type->add_user( q{undeadzy},  q{~undeadzy@undeadzy.undead.gamesurge} );
     $type->add_user( q{wraithbot}, q{~wraithbot@wraithbot.bot.gamesurge} );
+    $type->add_user( q{callisto`}, q{callisto@Megan.idle-whore.gamesurge} );
 }
 
 sub get_server_list {
@@ -456,7 +459,35 @@ sub handle_actions {
         }
     }
 
-    if ( $data =~ /^${BOT_PREFIX}reload\s+servers?$/ixms ) {
+    # See if we should stop the bot from replying
+    if ( $data =~ /^${BOT_PREFIX}mute\s*$/ixms ) {
+        if ( !$AUTH->user_is_privileged( $server, $nick, $mask ) ) {
+            send_bold_msg( $server, $target, $is_commandline,
+                "Insufficient access to run this command" );
+            return 0;
+        }
+        else {
+            send_bold_msg( $server, $target, $is_commandline,
+                "Muting wraithbot" );
+            $MUTE = 1;
+        }
+
+    } elsif ($data =~ /^${BOT_PREFIX}unmute\s*$/ixms ) {
+        if ( !$AUTH->user_is_privileged( $server, $nick, $mask ) ) {
+            send_bold_msg( $server, $target, $is_commandline,
+                "Insufficient access to run this command" );
+            return 0;
+        }
+        else {
+            send_bold_msg( $server, $target, $is_commandline,
+                "Unmuting wraithbot" );
+            $MUTE = 0;
+        }
+
+    } elsif ($MUTE) {
+        return;
+
+    } elsif ( $data =~ /^${BOT_PREFIX}reload\s+servers?\s*$/ixms ) {
         if ( !$AUTH->user_is_privileged( $server, $nick, $mask ) ) {
             send_bold_msg( $server, $target, $is_commandline,
                 "Insufficient access to run this command" );

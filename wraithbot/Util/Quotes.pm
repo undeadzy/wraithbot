@@ -30,15 +30,17 @@ use Readonly;
 
 use version 0.77; our $VERSION = version->declare('v0.0.1');
 
-Readonly my $QUOTES => 'quotes';
+Readonly my $QUOTES  => 'quotes';
+Readonly my $COUNTER => 'counter';
 
 sub new {
     my ( $arg, @args ) = @_;
     my $class = ref($arg) || $arg;
 
     my $self = {
-        quotes => undef,
-        file   => $args[0],
+        quotes  => undef,
+        counter => undef,
+        file    => $args[0],
     };
 
     bless( $self, $class );
@@ -119,6 +121,7 @@ sub reload_quotes {
     else {
         $self->{quotes} = $self->get_quotes( $self->{file} );
     }
+    $self->{counter} = {};
 
     return 1;
 }
@@ -139,7 +142,29 @@ sub get_quote_status {
 sub get_ism {
     my ( $self, $name ) = @_;
 
-    return $self->get_random_quote($name);
+    return $self->get_next_quote($name);
+}
+
+sub get_next_quote {
+    my ( $self, $name ) = @_;
+
+    if ( !exists( $self->{$QUOTES}->{$name} ) ) {
+        return "";
+    }
+
+    my $num_quotes = $#{ $self->{$QUOTES}->{$name} } + 1;
+
+    if (exists ($self->{$COUNTER}->{$name})) {
+        if ($self->{$COUNTER}->{$name} >= $#{ $self->{$QUOTES}->{$name} }) {
+            $self->{$COUNTER}->{$name} = 0;
+        } else {
+            $self->{$COUNTER}->{$name}++;
+        }
+    } else {
+        $self->{$COUNTER}->{$name} = 0;
+    }
+
+    return $self->{$QUOTES}->{$name}->[ $self->{$COUNTER}->{$name} ];
 }
 
 sub get_random_quote {

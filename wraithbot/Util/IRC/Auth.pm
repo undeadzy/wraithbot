@@ -345,6 +345,11 @@ sub user_is_spamming {
         return 1;
     }
 
+    # Allow trusted users to PM as quickly as they want
+    if ( exists($self->{$USERS}->{$nick}) && $self->{$USERS}->{$nick} eq $mask ) {
+        return 0;
+    }
+
     # Allow people to send PMs quickly
     if ( lc($channel) eq lc($PM) || $channel !~ m{^\#}msx ) {
         if ( $self->{$PM} + $self->{$DELAY} >= time() ) {
