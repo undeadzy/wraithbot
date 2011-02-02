@@ -34,7 +34,7 @@ use version 0.77; our $VERSION = version->declare('v0.0.1');
 # You shouldn't need to change these
 Readonly our $TIME_ZONE  => 'America/New_York';
 Readonly our $TS_MATCH   => "Next Tuesday at 21:30";
-Readonly our $CTF_MATCH  => "Next Sunday at 21:30";
+Readonly our $CTF_MATCH  => "Next Sunday at 21:00";
 
 sub new {
     my ($class) = @_;
