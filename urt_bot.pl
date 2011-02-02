@@ -63,6 +63,7 @@ use Util::TS3::Wrapper;
 
 use Util::Fortune;
 use Util::Quotes;
+use Util::FTW;
 
 use Util::IRC::Auth;
 use Util::IRC::Format;
@@ -85,7 +86,7 @@ Readonly my $BOT_PREFIX => '[!\@,.]';
 
 # Yeah all of this screams a plugin system but I'm done with this...
 Readonly my $HELP_MESSAGE =>
-q{Available commands (restricted to certain servers): !ts, !ctf, !bomb, !servers_status, !players <server name|IP>, !meow, !rawr, !fortune, !fortune_off, !isms, !gtv, !gtv_ip, !gtv_msg, !ts3 list, !ts3 <server alias> [admin: !gtv <ip:port> <msg>, !gtv_ip <ip:port>, !gtv_msg <msg>] [owner: !mute, !unmute, !reload <ts3|clans|servers>]};
+q{Available commands (restricted to certain servers): !ts, !ctf, !bomb, !servers_status, !players <server name|IP>, !meow, !rawr, !fortune, !fortune_off, !isms, !gtv, !gtv_ip, !gtv_msg, !ts3 list, !ts3 <server alias> !time !next_ts !next_ctf !next_matches [admin: !gtv <ip:port> <msg>, !gtv_ip <ip:port>, !gtv_msg <msg>] [owner: !mute, !unmute, !reload <ts3|clans|servers>]};
 
 Readonly my $MEOW_RESPONSE => q{MEEOOOWW};
 Readonly my $RAWR_RESPONSE => q{RRAAWWWRRR};
@@ -137,6 +138,7 @@ Readonly my $URT => Quake3::Commands::Util::UrbanTerror->new(
     Irssi::settings_get_str($CLAN_FILE) );
 Readonly my $QUOTES =>
   Util::Quotes->new( Irssi::settings_get_str($QUOTES_FILE) );
+Readonly my $TIME => Util::FTW->new();
 
 # The bot listens in any channel in the private or public area.
 # The ops => argument is used to determine whether this channel should be used for authorization.
@@ -472,7 +474,8 @@ sub handle_actions {
             $MUTE = 1;
         }
 
-    } elsif ($data =~ /^${BOT_PREFIX}unmute\s*$/ixms ) {
+    }
+    elsif ($data =~ /^${BOT_PREFIX}unmute\s*$/ixms ) {
         if ( !$AUTH->user_is_privileged( $server, $nick, $mask ) ) {
             send_bold_msg( $server, $target, $is_commandline,
                 "Insufficient access to run this command" );
@@ -484,10 +487,33 @@ sub handle_actions {
             $MUTE = 0;
         }
 
-    } elsif ($MUTE) {
+    }
+    elsif ($MUTE) {
         return;
 
-    } elsif ( $data =~ /^${BOT_PREFIX}reload\s+servers?\s*$/ixms ) {
+    }
+    elsif ( $data =~ /^${BOT_PREFIX}next[_\s+]match(?:es)?\s*$/ixms ) {
+	my @lines = $TIME->next_matches();
+	for my $line (@lines) {
+	    send_bold_msg( $server, $target, $is_commandline, $line );
+	}
+    }
+    elsif ( $data =~ /^${BOT_PREFIX}next[_\s+]ts(?:[_\s+]match(?:es)?)?\s*$/ixms ) {
+	send_bold_msg( $server, $target, $is_commandline,
+		       $TIME->next_ts() );
+
+    }
+    elsif ( $data =~ /^${BOT_PREFIX}next[_\s+]ctf(?:[_\s+]match(?:es)?)?\s*$/ixms ) {
+	send_bold_msg( $server, $target, $is_commandline,
+		       $TIME->next_ctf() );
+
+    }
+    elsif ( $data =~ /^${BOT_PREFIX}(?:(?:ftwgl|current)[_\s+])?time\s*$/ixms ) {
+	send_bold_msg( $server, $target, $is_commandline,
+		       $TIME->current_time() );
+
+    }
+    elsif ( $data =~ /^${BOT_PREFIX}reload[_\s+]servers?\s*$/ixms ) {
         if ( !$AUTH->user_is_privileged( $server, $nick, $mask ) ) {
             send_bold_msg( $server, $target, $is_commandline,
                 "Insufficient access to run this command" );
@@ -501,7 +527,7 @@ sub handle_actions {
         }
 
     }
-    elsif ( $data =~ /^${BOT_PREFIX}reload\s+clans?\s*$/ixms ) {
+    elsif ( $data =~ /^${BOT_PREFIX}reload[_\s+]clans?\s*$/ixms ) {
         if ( !$AUTH->user_is_privileged( $server, $nick, $mask ) ) {
             send_bold_msg( $server, $target, $is_commandline,
                 "Insufficient access to run this command" );
@@ -515,7 +541,7 @@ sub handle_actions {
         }
 
     }
-    elsif ( $data =~ /^${BOT_PREFIX}reload\s+quotes?\s*$/ixms ) {
+    elsif ( $data =~ /^${BOT_PREFIX}reload[_\s+]quotes?\s*$/ixms ) {
         if ( !$AUTH->user_is_privileged( $server, $nick, $mask ) ) {
             send_bold_msg( $server, $target, $is_commandline,
                 "Insufficient access to run this command" );
@@ -529,7 +555,7 @@ sub handle_actions {
         }
 
     }
-    elsif ( $data =~ /^${BOT_PREFIX}reload\s+all\s*$/ixms ) {
+    elsif ( $data =~ /^${BOT_PREFIX}reload[_\s+]all\s*$/ixms ) {
         if ( !$AUTH->user_is_privileged( $server, $nick, $mask ) ) {
             send_bold_msg( $server, $target, $is_commandline,
                 "Insufficient access to run this command" );
@@ -597,14 +623,14 @@ sub handle_actions {
         }
 
     }
-    elsif ( $data =~ /^${BOT_PREFIX}fortune(?:_|\s+)off\s*$/ixms ) {
+    elsif ( $data =~ /^${BOT_PREFIX}fortune[_\s+]off\s*$/ixms ) {
         my @output = Util::Fortune->fortune(1);
         foreach my $line (@output) {
             send_bold_msg( $server, $target, $is_commandline, $line );
         }
 
     }
-    elsif ( $data =~ /^${BOT_PREFIX}servers?(?:_|\s+)status\s*$/ixms ) {
+    elsif ( $data =~ /^${BOT_PREFIX}servers?[_\s+]status\s*$/ixms ) {
         return $URT->print_servers_status( $SERVERS, $server, $target );
 
     }
@@ -684,7 +710,7 @@ sub handle_actions {
 ## All related to TS3.
 
     }
-    elsif ( $data =~ /^${BOT_PREFIX}reload\s+ts3\s*$/ixms ) {
+    elsif ( $data =~ /^${BOT_PREFIX}reload[_\s+]ts3\s*$/ixms ) {
 
         # Only allow named users reload the server list
         if ( !$AUTH->user_is_privileged( $server, $nick, $mask ) ) {
@@ -700,13 +726,13 @@ sub handle_actions {
         }
 
     }
-    elsif ( $data =~ /^${BOT_PREFIX}ts3\s+list\s*$/ixms ) {
+    elsif ( $data =~ /^${BOT_PREFIX}ts3[_\s+]list\s*$/ixms ) {
         send_bold_msg( $server, $target, $is_commandline,
             "Server aliases: "
               . join( ", ", sort { lc($a) cmp lc($b) } ( keys( %{$TS3} ) ) ) );
 
     }
-    elsif ( $data =~ /^${BOT_PREFIX}ts3\s+setup\s*$/ixms ) {
+    elsif ( $data =~ /^${BOT_PREFIX}ts3[_\s+]setup\s*$/ixms ) {
         my @lines;
         foreach my $key ( sort { lc($a) cmp lc($b) } ( keys( %{$TS3} ) ) ) {
             push(
@@ -729,7 +755,7 @@ sub handle_actions {
         }
 
     }
-    elsif ( $data =~ /^${BOT_PREFIX}ts3\s+(\S+)\s*/ixms ) {
+    elsif ( $data =~ /^${BOT_PREFIX}ts3[_\s+](\S+)\s*/ixms ) {
 
     # handle the ts3 server.  It will return lines on success or undef on error?
         my $name = $1;
