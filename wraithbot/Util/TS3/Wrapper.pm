@@ -45,9 +45,10 @@ sub new {
     my ( $inp, $server, $port ) = @_;
     my $class = ref($inp) || $inp;
 
-    my $self =
-      { ts3 => Util::TS3::Commands->new( { server => $server, port => $port } ),
-      };
+    my $self = {
+        ts3 => Util::TS3::Commands->new( { server => $server, port => $port } ),
+        server => $server,
+    };
 
     bless( $self, $class );
     return $self;
@@ -66,7 +67,7 @@ sub irc_listing {
         return ($result->{msg}, );
     }
 
-    my $msg = $self->_get_irc_message($result->{welcome}, $result->{channels});
+    my $msg = "[" . $self->{server} . ":" . $virt_server . "]  " . $self->_get_irc_message($result->{welcome}, $result->{channels});
 
     local ($Text::Wrap::columns) = 400;
     my $split_msg = wrap( "", "", $msg );
