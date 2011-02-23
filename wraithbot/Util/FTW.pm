@@ -57,30 +57,31 @@ sub current_time {
 sub next_ts {
     my ($self) = @_;
 
-    my $now = DateTime->now(time_zone => $TIME_ZONE);
-    my $ts  = $self->{fmt}->parse_datetime($TS_MATCH);
-    my $ts_diff = $ts - $now;
-
-    if ( $ts_diff->in_units('days') >= 6
-	 && $ts_diff->days >= 6 && $ts_diff->hours >= 22 ) {
-	return "Current TS matches have been in progress since 9:30pm!";
-    } else {
-	return "Next FTWGL TS match is in " . $ts_diff->days . " days, " . $ts_diff->hours . " hours, " . $ts_diff->minutes . " minutes";
-    }
+    return $self->_next_type("TS", $TS_MATCH);
 }
 
 sub next_ctf {
     my ($self) = @_;
 
-    my $now = DateTime->now(time_zone => $TIME_ZONE);
-    my $ctf = $self->{fmt}->parse_datetime($CTF_MATCH);
-    my $ctf_diff = $ctf - $now;
+    return $self->_next_type("CTF", $CTF_MATCH);
+}
 
-    if ( $ctf_diff->in_units('days') >= 6
-	 && $ctf_diff->days >= 6 && $ctf_diff->hours >= 22 ) {
-	return "Current CTF matches have been in progress since 9:00pm!";
+sub _next_type {
+    my ($self, $type, $match) = @_;
+
+    my $now = DateTime->now(time_zone => $TIME_ZONE);
+    my $game  = $self->{fmt}->parse_datetime($match);
+    my $game_diff = $game - $now;
+
+    if ( $game_diff->in_units('days') >= 6
+	 && $game_diff->days >= 6 && $game_diff->hours >= 22 ) {
+	return "Current $type matches are in progress!";
+
     } else {
-	return "Next FTWGL CTF match is in " . $ctf_diff->days . " days, " . $ctf_diff->hours . " hours, " . $ctf_diff->minutes . " minutes";
+	return "Next FTWGL $type match is in "
+               . $game_diff->days    . " " . ($game_diff->days == 1 ? "day" : "days") . ", "
+               . $game_diff->hours   . " " . ($game_diff->hours == 1 ? "hour" : "hours") . ", "
+               . $game_diff->minutes . " " . ($game_diff->minutes == 1 ? "minute" : "minutes");
     }
 }
 

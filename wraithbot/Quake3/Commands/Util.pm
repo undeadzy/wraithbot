@@ -40,6 +40,8 @@ use Text::Wrap;
 
 use Quake3::Commands;
 
+use Util::IRC::Format;
+
 use version 0.77; our $VERSION = version->declare('v0.0.1');
 
 # Config settings that we use.  Note: We cannot use these directly
@@ -51,17 +53,32 @@ Readonly our $CVAR_MAX_CLIENTS     => 'sv_maxclients';
 Readonly our $CVAR_PRIVATE_CLIENTS => 'sv_privateclients';
 Readonly our $CVAR_NEED_PASSWORD   => 'g_needpass';
 
-# Colors for irssi.  Or in this case, styles.
-Readonly my $COLOR_BOLD  => "\cB";
-Readonly my $COLOR_RESET => "\cO";
+my $FMT = Util::IRC::Format->new();
 
 sub new {
     my ($class) = @_;
 
-    my $self = {};
+    my $self = {
+    };
 
     bless( $self, $class );
     return $self;
+}
+
+sub filter {
+    my ($self, $msg) = @_;
+
+    # Quake3 specific
+    $msg =~ s{\^(\d|[FfbBnNXx])}{}gmxs;
+
+    # General IRC filtering
+    $msg = $FMT->plaintext_filter($msg);
+
+    # Whitespace cleanup
+    $msg =~ s{^\s+}{}gxms;
+    $msg =~ s{\s+$}{}gxms;
+
+    return $msg;
 }
 
 # Get a description of the players given the passed in settings.
@@ -299,15 +316,7 @@ sub _print_too_many_servers {
     my ( $self, $matches_ref, $irc_server, $irc_target ) = @_;
 
     if ( $#{$matches_ref} == -1 ) {
-        if ( $irc_target =~ /^\#/ixms ) {
-            $irc_server->send_message( $irc_target,
-                $COLOR_BOLD . "No matches" . $COLOR_RESET, 0 );
-
-        }
-        else {
-            $irc_server->send_message( $irc_target,
-                $COLOR_BOLD . "No matches" . $COLOR_RESET, 1 );
-        }
+	$FMT->send_bold_msg($irc_server, $irc_target, "No matches");
 
     }
     else {
@@ -317,27 +326,8 @@ sub _print_too_many_servers {
             push( @names, $m->{ $keys[0] }->{name} );
         }
 
-        if ( $irc_target =~ /^\#/ixms ) {
-            $irc_server->send_message(
-                $irc_target,
-                $COLOR_BOLD
-                  . "Found too many matches: "
-                  . join( ", ", @names )
-                  . $COLOR_RESET,
-                0
-            );
-
-        }
-        else {
-            $irc_server->send_message(
-                $irc_target,
-                $COLOR_BOLD
-                  . "Found too many matches: "
-                  . join( ", ", @names )
-                  . $COLOR_RESET,
-                1
-            );
-        }
+	$FMT->send_bold_msg($irc_server, $irc_target,
+			    "Found too many matches: " . join( ", ", @names ));
     }
 
     return 1;
@@ -517,18 +507,7 @@ qq{%-${max_name}.${max_name}s %${max_type}.${max_type}s %${max_player}.${max_pla
     );
 
     if ( defined($irc_server) && defined($irc_target) ) {
-
-# XXX Why can't irssi figure this out?  Can users really have '#' in their name?
-        if ( $irc_target =~ /^\#/ixms ) {
-            $irc_server->send_message( $irc_target,
-                $COLOR_BOLD . $msg . $COLOR_RESET, 0 );
-
-        }
-        else {
-            $irc_server->send_message( $irc_target,
-                $COLOR_BOLD . $msg . $COLOR_RESET, 1 );
-        }
-
+	$FMT->send_bold_msg($irc_server, $irc_target, $msg);
     }
     else {
 
@@ -559,17 +538,7 @@ sub print_players_response {
         # score, ping, name
         my $name = $p->{name};
 
-        $name =~ s{\^(\d|[FfbBnNXx])}{}gmxs;
-
-# XXX Properly sanitize the name.  We don't want people to be able to execute IRC commands.
-        $name =~ s{[[:cntrl:]]}{}gxms;
-        $name =~ s{;}{}gxms;
-        $name =~ s{(\R|\v|\h)+}{}gxms;
-
-        # Don't allow {} yet because they are used for colors
-        $name =~ s{[^=\(\)<>\[\]\|\/a-zA-Z0-9_\.\^\*\!\-]+}{}gxms;
-        $name =~ s{^\s+}{}gxms;
-        $name =~ s{\s+$}{}gxms;
+        $name = $self->filter($name);
 
         push( @playerlist, sprintf( qq{%.20s}, $name ) );
     }
@@ -581,18 +550,7 @@ sub print_players_response {
       . join( q{, }, @playerlist );
 
     if ( defined($irc_server) && defined($irc_target) ) {
-
-# XXX Why can't irssi figure this out?  Can users really have '#' in their name?
-        if ( $irc_target =~ /^\#/ixms ) {
-            $irc_server->send_message( $irc_target,
-                $COLOR_BOLD . $msg . $COLOR_RESET, 0 );
-
-        }
-        else {
-            $irc_server->send_message( $irc_target,
-                $COLOR_BOLD . $msg . $COLOR_RESET, 1 );
-        }
-
+	$FMT->send_bold_msg($irc_server, $irc_target, $msg);
     }
     else {
 
@@ -617,21 +575,8 @@ sub print_server_settings {
     {
         my $val = $v_ref->{data}->{settings}->{$name};
 
-        $name =~ s{\^(\d|[FfbBnNXx])}{}gxms;
-        $name =~ s{[^a-zA-Z0-9_\s.]+}{}gxms;
-        $name =~ s{^\s+}{}gxms;
-        $name =~ s{\s+$}{}gxms;
-
-# XXX Properly sanitize the name.  We don't want people to be able to execute IRC commands.
-        $val =~ s{\^(\d|[FfbBnNXx])}{}gxms;
-        $val =~ s{[[:cntrl:]]}{}gxms;
-        $val =~ s{;}{}gxms;
-        $val =~ s{(\R|\v|\h)+}{}gxms;
-
-        # Don't allow {} yet because they are used for colors
-        $val =~ s{[^=@\(\)<>\[\]\|\/a-zA-Z0-9_\.\*\!:\-]+}{}gxms;
-        $val =~ s{^\s+}{}gxms;
-        $val =~ s{\s+$}{}gxms;
+        $name = $self->filter($name);
+        $val = $self->filter($val);
 
         push( @settings, sprintf( qq{%.20s=%.20s}, $name, $val ) );
     }
@@ -647,26 +592,12 @@ sub print_server_settings {
     my @lines = split( /\n/xms, $split_msg );
 
     if ( defined($irc_server) && defined($irc_target) ) {
-
-# XXX Why can't irssi figure this out?  Can users really have '#' in their name?
         my $max_lines = ( $#lines < 4 ? $#lines : 4 );
-        if ( $irc_target =~ /^\#/ixms ) {
-            for my $i ( 0 .. $max_lines ) {
-                $irc_server->send_message( $irc_target,
-                    $COLOR_BOLD . $lines[$i] . $COLOR_RESET, 0 );
-            }
-
-        }
-        else {
-            for my $i ( 0 .. $max_lines ) {
-                $irc_server->send_message( $irc_target,
-                    $COLOR_BOLD . $lines[$i] . $COLOR_RESET, 1 );
-            }
-        }
-
+	for my $i ( 0 .. $max_lines ) {
+	    $FMT->send_bold_msg($irc_server, $irc_target, $lines[$i]);
+	}
     }
     else {
-
         # Don't make this a cluck.  It's supposed to go to the console.
         print "$msg\n";
     }
@@ -688,27 +619,17 @@ sub print_server_status {
     my @off_lines = split( /\n/xms, $off_split_msg );
 
     if ( defined($irc_server) && defined($irc_target) ) {
-
-# XXX Why can't irssi figure this out?  Can users really have '#' in their name?
-        my $type = 1;
-        if ( $irc_target =~ /^\#/ixms ) {
-            $type = 0;
-        }
-
         my $max_lines = ( $#on_lines < 5 ? $#on_lines : 5 );
         for my $i ( 0 .. $max_lines ) {
-            $irc_server->send_message( $irc_target,
-                $COLOR_BOLD . $on_lines[$i] . $COLOR_RESET, 0 );
+	    $FMT->send_bold_msg($irc_server, $irc_target, $on_lines[$i]);
         }
 
         if ( scalar( keys( %{ $status->{offline} } ) ) > 0 ) {
             $max_lines = ( $#off_lines < 5 ? $#off_lines : 5 );
             for my $i ( 0 .. $max_lines ) {
-                $irc_server->send_message( $irc_target,
-                    $COLOR_BOLD . $off_lines[$i] . $COLOR_RESET, 0 );
-            }
+		$FMT->send_bold_msg($irc_server, $irc_target, $off_lines[$i]);
+	    }
         }
-
     }
     else {
 

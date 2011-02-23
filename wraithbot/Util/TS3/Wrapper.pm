@@ -32,6 +32,7 @@ use Readonly;
 use Net::Telnet;
 use Text::Wrap;
 
+use Util::IRC::Format;
 use Util::TS3::Commands;
 
 use version 0.77; our $VERSION = version->declare('v0.0.1');
@@ -39,6 +40,8 @@ use version 0.77; our $VERSION = version->declare('v0.0.1');
 Readonly my $SERVER => 'server';
 Readonly my $PORT   => 'port';
 Readonly my $TS3    => 'ts3';
+
+my $FMT = Util::IRC::Format->new();
 
 # XXX NOTE: TS3 has the newline backwards.  It should be \r\n not \n\r
 sub new {
@@ -131,10 +134,7 @@ sub _mute_status {
 sub _sanitize {
     my ( $self, $msg, $max_len ) = @_;
 
-    $msg =~ s{[^0-9a-zA-Z_,.\@:'"!/ =-]+}{}gxms;
-
-    # Don't allow IRC like commands
-    $msg =~ s{^\s*/+}{}gxms;
+    $msg = $FMT->plaintext_filter($msg);
 
     return substr( $msg, 0, $max_len );
 }

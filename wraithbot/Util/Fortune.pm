@@ -25,6 +25,8 @@ package Util::Fortune;
 use strict;
 use warnings;
 
+use Util::IRC::Format;
+
 use Carp qw(cluck);
 use IPC::System::Simple qw(capturex);
 
@@ -36,6 +38,8 @@ use version 0.77; our $VERSION = version->declare('v0.0.1');
 Readonly our $FORTUNE_COMMAND   => '/usr/games/fortune';
 Readonly our $FORTUNE_SHORT     => '-s';
 Readonly our $FORTUNE_OFFENSIVE => '-o';
+
+my $FMT = Util::IRC::Format->new();
 
 sub new {
     my ($class) = @_;
@@ -71,10 +75,10 @@ sub fortune {
     } || return ("fortune: command failed");
 
     # Make sure none of the fortune lines start with / to avoid complications
+    # The rest of the filtering is done by whoever prints this
     foreach my $line (@output) {
         $line =~ s{^(\s*)/+}{$1}gxms;
-        $line =~ s{\n}{}gxms;
-        $line =~ s{;}{}gxms;
+        $line = $FMT->plaintext_filter($line);
     }
 
     return @output;

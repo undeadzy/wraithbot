@@ -91,10 +91,6 @@ q{Available commands (restricted to certain servers): !ts, !ctf, !bomb, !servers
 Readonly my $MEOW_RESPONSE => q{MEEOOOWW};
 Readonly my $RAWR_RESPONSE => q{RRAAWWWRRR};
 
-# Colors for irssi.  Or in this case, styles.
-Readonly my $COLOR_BOLD  => "\cB";
-Readonly my $COLOR_RESET => "\cO";
-
 # Edit this for the default settings.  These can be modified by trusted users
 # (see trusted_user function below).  This gets saved into your config file.
 #
@@ -109,6 +105,9 @@ Readonly my $SERVERS_FILE => "urt_servers_file";
 Readonly my $TS3_FILE     => "urt_ts3_file";
 Readonly my $CLAN_FILE    => "urt_clan_file";
 Readonly my $QUOTES_FILE  => "urt_quotes_file";
+
+Readonly my $COLOR_BOLD  => "\cB";
+Readonly my $COLOR_RESET => "\cO";
 
 #
 # These get saved/read from your irssi config
@@ -127,6 +126,8 @@ Irssi::settings_add_str( "misc", $CLAN_FILE,
     $ENV{HOME} . "/.irssi/scripts/wraithbot/conf/clans.txt" );
 Irssi::settings_add_str( "misc", $QUOTES_FILE,
     $ENV{HOME} . "/.irssi/scripts/wraithbot/conf/quotes.txt" );
+
+my $FMT = Util::IRC::Format->new();
 
 # Edit this for the list of servers you want.  You will want to have an unique prefix
 # because commands like !players will match on the prefix.
@@ -151,13 +152,14 @@ my $AUTH = Util::IRC::Auth->new();
 my $TS3_AUTH = Util::IRC::Auth->new( { delay => 2 } );
 
 for my $type ( $AUTH, $TS3_AUTH ) {
-    $type->add_private_channel( "#icuclan",  1 );
-    $type->add_private_channel( "#vex-priv", 1 );
+    $type->add_private_channel( "#venpriv",  1 );
+    $type->add_private_channel( "#icuclan",  0 );
+    $type->add_private_channel( "#vex-priv", 0 );
 
     $type->add_public_channel( "#ftwgl",           1 );
-    $type->add_public_channel( "#icu",             1 );
-    $type->add_public_channel( "#clan-vex",        1 );
-    $type->add_public_channel( "#team-veneration", 0 );
+    $type->add_public_channel( "#team-veneration", 1 );
+    $type->add_public_channel( "#icu",             0 );
+    $type->add_public_channel( "#clan-vex",        0 );
     $type->add_public_channel( "#cakeclan",        0 );
 
   # Testing channel
@@ -199,6 +201,9 @@ sub get_server_list {
         elsif ( $line =~ m{^\s*(.+)\s+((?:\d+\.){3}\d+:\d+)\s*(\#.*)?$}ixms ) {
             my ( $name, $addr ) = ( $1, $2 );
 
+	    $name = $FMT->plaintext_filter($name);
+	    $addr = $FMT->plaintext_filter($addr);
+
             $name =~ s{^\s+}{}xms;
             $name =~ s{\s+$}{}xms;
 
@@ -239,9 +244,14 @@ sub get_ts3_list {
 
         }
         elsif ( $line =~
-            m{^\s*(.+)\s+((?:\d+\.){3}\d+)\s+(\d+)\s+(\d+)(\s*\#.*)?$}ixms )
+            m{^\s*(.+)\s+((?:\d+\.){3}\d+)\s+(\d+)\s+(\d+)(\s*(?:\#.*)?)?$}ixms )
         {
             my ( $name, $addr, $client_port, $query_port ) = ( $1, $2, $3, $4 );
+
+	    $name = $FMT->plaintext_filter($name);
+	    $addr = $FMT->plaintext_filter($addr);
+	    $client_port = $FMT->plaintext_filter($client_port);
+	    $query_port = $FMT->plaintext_filter($query_port);
 
             $name =~ s{^\s+}{}xms;
             $name =~ s{\s+$}{}xms;
@@ -277,18 +287,12 @@ sub is_valid_prefix {
 sub send_bold_msg {
     my ( $server, $target, $is_commandline, $msg ) = @_;
 
-    my $is_nick = 1;
-    if ( defined($target) && $target =~ m{^\#}xms ) {
-        $is_nick = 0;
-    }
-
     if ($is_commandline) {
         return Irssi::print( $COLOR_BOLD . $msg . $COLOR_RESET );
 
     }
     else {
-        return $server->send_message( $target,
-            $COLOR_BOLD . $msg . $COLOR_RESET, $is_nick );
+	$FMT->send_bold_msg($server, $target, $msg);
     }
 }
 
@@ -296,7 +300,8 @@ sub send_bold_msg {
 sub sanitize_ip_port {
     my ($data) = @_;
 
-    $data =~ s{[^0-9.:]+}{}gxms;
+    $data = $FMT->plaintext_filter($data);
+    $data =~ s{[^[:alnum:]\._]+}{}gxms;
 
     Irssi::settings_set_str( $GTV_IP, $data );
 
@@ -307,10 +312,7 @@ sub sanitize_ip_port {
 sub sanitize_msg {
     my ($data) = @_;
 
-    $data =~ s{[^0-9a-zA-Z_.\@:'"! \-]+}{}gxms;
-
-    # Don't allow IRC like commands
-    $data =~ s{^\s*/+}{}gxms;
+    $data = $FMT->plaintext_filter($data);
 
     Irssi::settings_set_str( $GTV_MESSAGE, $data );
 
@@ -423,8 +425,8 @@ m{^${BOT_PREFIX}rcon\s+g_gametype\s+(ffa|tdm|ts|ftl|cah|ctf|bomb)\s*$}ixms
 q{Invalid command.  Allowed rcon commands: map <name>, map_restart, g_password <pass>, g_gametype <0-8> or <FFA|TDM|TS|FTL|CAH|CTF|BOMB>, say <text>, g_respawndelay <number>};
 
         if ( defined($server) && defined($channel) ) {
-            $server->send_message( $channel->{name},
-                $COLOR_BOLD . $msg . $COLOR_RESET, 0 );
+	    # XXX This should use $is_commandline
+	    send_bold_msg($server, $channel->{name}, 0, $msg);
 
         }
         else {

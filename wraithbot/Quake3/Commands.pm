@@ -30,6 +30,8 @@ package Quake3::Commands;
 use strict;
 use warnings;
 
+use Util::IRC::Format;
+
 use Data::Dumper;
 use Readonly;
 use Carp qw(cluck);
@@ -40,6 +42,8 @@ use version 0.77; our $VERSION = version->declare('v0.0.1');
 Readonly our $COMMAND_PREFIX          => "\xff\xff\xff\xff";
 Readonly our $COMMAND_GET_STATUS      => "getStatus";
 Readonly our $COMMAND_STATUS_RESPONSE => "statusResponse";
+
+my $FMT = Util::IRC::Format->new();
 
 sub new {
     my ($class) = @_;
@@ -76,6 +80,10 @@ sub parse_status_response {
         cluck "tmp didn't have an even number of entries";
         return {};
     }
+    for my $i (0 .. $#tmp) {
+	$tmp[$i] = $FMT->plaintext_filter($tmp[$i]);
+    }
+
     my %settings = @tmp;
 
     # I use some of these so make sure they are valid.

@@ -28,6 +28,11 @@ use Carp;
 
 use version 0.77; our $VERSION = version->declare('v0.0.1');
 
+use Readonly;
+
+Readonly my $COLOR_BOLD  => "\cB";
+Readonly my $COLOR_RESET => "\cO";
+
 sub new {
     my ($obclass) = @_;
     my $class = ref($obclass) || $obclass;
@@ -36,6 +41,62 @@ sub new {
 
     bless( $self, $class );
     return $self;
+}
+
+# Filter out characters that are treated specially by irssi
+#
+# Make sure you run this before adding attributes/color to the text
+# since this will strip it out.
+sub plaintext_filter {
+    my ($class, $msg) = @_;
+
+    # It would be best to filter out color sequences which include the
+    # control characters and any printable characters.
+    #
+    # See:
+    # http://www.dragoncat.net/lists/irssi-users/2011-02/0003.html
+
+    # Filter out color codes.  Do this first so we don't leave
+    # the digits which are vaild.
+    $msg =~ s{\x03\d{0,2}(?:,\d{1,2})?}{}gxms;
+
+    # Is there a regex for ANSI escape/color codes?  If so, put it here.
+    # Otherwise, we're going to just remove the 0x1b since it's a non-printable.
+
+    # Replace tabs with spaces.
+    $msg =~ s{\t}{\ \ \ \ \ \ \ \ }gxms;
+
+    # We don't allow non-ASCII or control characters
+    $msg =~ s{[[:^ascii:][:cntrl:]]+}{}gxms;
+
+    # This should be the printable ASCII characters plus space.
+    # Note: We definitely do not want to allow \r or \n.
+    $msg =~ s{[^[:graph:]\ ]+}{}gxms;
+
+    return $msg;
+}
+
+sub send_msg {
+    my ($class, $server, $target, $msg) = @_;
+
+    $msg = $class->plaintext_filter($msg);
+    return $server->command("MSG " . $target . " " . $msg);
+}
+
+sub send_bold_msg {
+    my ($class, $server, $target, $msg) = @_;
+
+    $msg = $class->plaintext_filter($msg);
+
+    return $server->command("MSG " . $target . " " . $COLOR_BOLD . $msg . $COLOR_RESET);
+}
+
+# Use this with care.  This will not filter out anything.
+# It assumes the caller already did
+sub send_unfiltered_msg {
+    my ($class, $server, $target, $msg) = @_;
+
+    return $server->command("MSG " . $target . " " . $msg);
 }
 
 # Expects a 2D array

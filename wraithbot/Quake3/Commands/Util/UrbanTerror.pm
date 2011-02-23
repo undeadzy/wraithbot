@@ -30,6 +30,8 @@ use Socket;
 use Data::Dumper;
 use Readonly;
 
+use Util::IRC::Format;
+
 use version 0.77; our $VERSION = version->declare('v0.0.1');
 
 # Inherit from Quake3::Commands::Util and override get_player_description and get_game_type
@@ -57,6 +59,8 @@ Readonly our $TYPE_GAME => {
 
 Readonly our $CVAR_MIN_SKILL   => 'minskill';
 Readonly our $CVAR_SV_HOSTNAME => 'sv_hostname';
+
+my $FMT = Util::IRC::Format->new();
 
 sub new {
     my ( $check, @args ) = @_;
@@ -116,9 +120,11 @@ sub reload_clans {
         elsif ( $line =~ m{^\s*(.+)\t+(.+)\s*$}ixms ) {
             my ( $name, $regex ) = ( $1, $2 );
 
+            $name = $FMT->plaintext_filter($name);
             $name =~ s{^\s+}{}xms;
             $name =~ s{\s+$}{}xms;
 
+            $regex = $FMT->plaintext_filter($regex);
             $regex =~ s{\s+$}{}xms;
             $regex =~ s{^\s+}{}xms;
 
@@ -251,6 +257,7 @@ sub get_player_description {
             # Remove colors like ^4 and ^7
             my $tmp = $p->{name};
             $tmp =~ s{\^(\d|[FfbBnNXx])}{}gxms;
+            $tmp = $FMT->plaintext_filter($tmp);
 
             if ( $tmp =~ m{$v}xms ) {
                 if ( !exists( $results{$k} ) ) {
