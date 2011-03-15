@@ -112,18 +112,18 @@ sub authorized_channel {
 }
 
 sub known_user {
-    my ( $self, $server, $nick, $mask, $channel ) = @_;
+    my ( $self, $server, $nick, $mask ) = @_;
 
     if ( !defined($server) || !defined($nick) || !defined($mask) ) {
         print "Invalid arguments\n";
         return 0;
     }
 
-    if ( $self->user_in_private( $server, $nick, $mask, $channel ) ) {
+    if ( $self->user_in_private( $server, $nick, $mask ) ) {
         return 1;
     }
 
-    if ( $self->user_someop_in_public( $server, $nick, $mask, $channel ) ) {
+    if ( $self->user_someop_in_public( $server, $nick, $mask ) ) {
         return 1;
     }
 
@@ -138,18 +138,18 @@ sub known_user {
 #
 # Note that the bot must be in any channel to get information about the members.
 sub trusted_user {
-    my ( $self, $server, $nick, $mask, $channel ) = @_;
+    my ( $self, $server, $nick, $mask ) = @_;
 
     if ( !defined($server) || !defined($nick) || !defined($mask) ) {
         print "Invalid arguments\n";
         return 0;
     }
 
-    if ( $self->user_in_private( $server, $nick, $mask, $channel ) ) {
+    if ( $self->user_in_private( $server, $nick, $mask ) ) {
         return 1;
     }
 
-    if ( $self->user_op_in_public( $server, $nick, $mask, $channel ) ) {
+    if ( $self->user_op_in_public( $server, $nick, $mask ) ) {
         return 1;
     }
 
@@ -199,7 +199,7 @@ sub find_user_in_channels {
 
 # Whether the user is in a private channel
 sub user_in_private {
-    my ( $self, $server, $nick, $mask, $channel ) = @_;
+    my ( $self, $server, $nick, $mask ) = @_;
 
     if ( !defined($server) || !defined($nick) || !defined($mask) ) {
         print "Invalid arguments\n";
@@ -207,15 +207,9 @@ sub user_in_private {
     }
 
     my @filtered;
-    if ( defined($channel) && $channel =~ /^\#/xms ) {
-        @filtered = ($channel);
-
-    }
-    else {
-        while ( my ( $k, $v ) = each %{ $self->{$PRIVATE} } ) {
-            if ( exists( $v->{ops} ) && $v->{ops} ) {
-                push( @filtered, $k );
-            }
+    while ( my ( $k, $v ) = each %{ $self->{$PRIVATE} } ) {
+        if ( exists( $v->{ops} ) && $v->{ops} ) {
+            push( @filtered, $k );
         }
     }
 
@@ -246,10 +240,10 @@ sub user_is_privileged {
 
 # Whether the user is an op in the public channel
 sub user_op_in_public {
-    my ( $self, $server, $nick, $mask, $channel ) = @_;
+    my ( $self, $server, $nick, $mask ) = @_;
 
     return $self->user_public_status(
-        $server, $nick, $mask, $channel,
+        $server, $nick, $mask,
         sub {
             my ($nick_ref) = @_;
 
@@ -263,10 +257,10 @@ sub user_op_in_public {
 }
 
 sub user_halfop_in_public {
-    my ( $self, $server, $nick, $mask, $channel ) = @_;
+    my ( $self, $server, $nick, $mask ) = @_;
 
     return $self->user_public_status(
-        $server, $nick, $mask, $channel,
+        $server, $nick, $mask,
         sub {
             my ($nick_ref) = @_;
 
@@ -280,10 +274,10 @@ sub user_halfop_in_public {
 }
 
 sub user_someop_in_public {
-    my ( $self, $server, $nick, $mask, $channel ) = @_;
+    my ( $self, $server, $nick, $mask ) = @_;
 
     return $self->user_public_status(
-        $server, $nick, $mask, $channel,
+        $server, $nick, $mask,
         sub {
             my ($nick_ref) = @_;
             if (   ( !exists( $nick_ref->{op} ) || !$nick_ref->{op} )
@@ -297,7 +291,7 @@ sub user_someop_in_public {
 }
 
 sub user_public_status {
-    my ( $self, $server, $nick, $mask, $channel, $sub_check ) = @_;
+    my ( $self, $server, $nick, $mask, $sub_check ) = @_;
 
     if ( !defined($server) || !defined($nick) || !defined($mask) ) {
         print "Invalid arguments\n";
@@ -305,15 +299,9 @@ sub user_public_status {
     }
 
     my @filtered;
-    if ( defined($channel) && $channel =~ /^\#/xms ) {
-        @filtered = ($channel);
-
-    }
-    else {
-        while ( my ( $k, $v ) = each %{ $self->{$PUBLIC} } ) {
-            if ( exists( $v->{ops} ) && $v->{ops} ) {
-                push( @filtered, $k );
-            }
+    while ( my ( $k, $v ) = each %{ $self->{$PUBLIC} } ) {
+        if ( exists( $v->{ops} ) && $v->{ops} ) {
+            push( @filtered, $k );
         }
     }
 

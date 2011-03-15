@@ -29,9 +29,8 @@ Screenshot
 20:26 <undeadzy> !players urt
 20:26 <wraithbot> UrT East (74.207.235.61:27961) = <list of users here>
 
-Note that it does heavy filtering on the names.  In general, any user input is
-(overly) sanitized.  Without doing a lot more investigation, there isn't a list
-of what input could be malicious to irssi bots.  Therefore, I'm overly cautious.
+Note that recent versions have smarter filtering so it doesn't restrict
+the input unnecessarily.
 
 
 Configuration

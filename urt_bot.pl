@@ -64,6 +64,7 @@ use Util::TS3::Wrapper;
 use Util::Fortune;
 use Util::Quotes;
 use Util::FTW;
+use Util::Venspeak;
 
 use Util::IRC::Auth;
 use Util::IRC::Format;
@@ -90,6 +91,7 @@ q{Available commands (restricted to certain servers): !ts, !ctf, !bomb, !servers
 
 Readonly my $MEOW_RESPONSE => q{MEEOOOWW};
 Readonly my $RAWR_RESPONSE => q{RRAAWWWRRR};
+Readonly my $MOO_RESPONSE  => q{MMMMOOOOOOOO};
 
 # Edit this for the default settings.  These can be modified by trusted users
 # (see trusted_user function below).  This gets saved into your config file.
@@ -172,6 +174,10 @@ for my $type ( $AUTH, $TS3_AUTH ) {
     $type->add_user( q{wraithbot}, q{~wraithbot@wraithbot.bot.gamesurge} );
     $type->add_user( q{callisto`}, q{callisto@Megan.idle-whore.gamesurge} );
 }
+
+my $VEN_AUTH = Util::IRC::Auth->new();
+$VEN_AUTH->add_private_channel("#venpriv", 1);
+$VEN_AUTH->add_public_channel("#team-veneration", 1);
 
 sub get_server_list {
     my $fh;
@@ -327,7 +333,8 @@ sub GTV_INFO {
       . Irssi::settings_get_str($GTV_MESSAGE);
 }
 
-# This only has a subset of the rcon commands.  For instance, 'set' can have many different variations.
+# This only has a subset of the rcon commands.  For instance, 'set' can have
+# many different variations.
 #
 # This is currently disabled by server admin request.
 #
@@ -339,6 +346,9 @@ sub GTV_INFO {
 # g_gametype <0-8> or <FFA|TDM|TS|FTL|CAH|CTF|BOMB>
 # say <text> where text is filtered to only allow certain characters
 # g_respawndelay <number>
+# status
+# timelimit <minutes>
+# exec <config path>
 # help
 #
 sub handle_rcon {
@@ -374,7 +384,7 @@ sub handle_rcon {
         return Quake3::Rcon->send_rcon( $setting, 'set', 'g_password', $1 );
 
     }
-    elsif ( $data =~ m{^${BOT_PREFIX}rcon\s+g_gametype\s+([0-7])\s*$}ixms ) {
+    elsif ( $data =~ m{^${BOT_PREFIX}rcon\s+g_gametype\s+([0-8])\s*$}ixms ) {
         return Quake3::Rcon->send_rcon( $setting, 'set', 'g_gametype', $1 );
 
     }
@@ -618,6 +628,10 @@ sub handle_actions {
         send_bold_msg( $server, $target, $is_commandline, $RAWR_RESPONSE );
 
     }
+    elsif ( $data =~ /^${BOT_PREFIX}moo+\s*$/ixms ) {
+        send_bold_msg( $server, $target, $is_commandline, $MOO_RESPONSE );
+
+    }
     elsif ( $data =~ /^${BOT_PREFIX}fortune\s*$/ixms ) {
         my @output = Util::Fortune->fortune(0);
         foreach my $line (@output) {
@@ -648,6 +662,13 @@ sub handle_actions {
                 send_bold_msg( $server, $target, $is_commandline, $line );
             }
         }
+
+    }
+    elsif ( $data =~ /^${BOT_PREFIX}venspeak\s+(.+)\s*$/ixms ) {
+	my $msg = $1;
+	if ( $VEN_AUTH->trusted_user($server, $nick, $mask)) {
+	    send_bold_msg($server, "#team-veneration", $is_commandline, Util::Venspeak->say($msg));
+	}
 
 ## All related to GTV
 
