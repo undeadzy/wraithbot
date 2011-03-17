@@ -49,11 +49,14 @@ use Irssi;
 use Irssi::Irc;
 use vars qw(%IRSSI);
 
+use Config::IniFiles;
+
 # Store everything in a separate directory
 use lib $ENV{HOME} . '/.irssi/scripts/wraithbot';
 
 use Quake3::Rcon;
 use Quake3::Rcon::Commands;
+use Quake3::Rcon::Util;
 use Quake3::Commands;
 use Quake3::Commands::Util;
 use Quake3::Commands::Util::UrbanTerror;
@@ -99,10 +102,6 @@ Readonly my $MOO_RESPONSE  => q{MMMMOOOOOOOO};
 # Keys so we don't have to worry about typos
 Readonly my $GTV_IP       => "urt_gtv_ip";
 Readonly my $GTV_MESSAGE  => "urt_gtv_message";
-Readonly my $RCON_HOST    => "urt_rcon_host";
-Readonly my $RCON_PORT    => "urt_rcon_port";
-Readonly my $RCON_PASS    => "urt_rcon_pass";
-Readonly my $RCON_TIMEOUT => "urt_rcon_timeout";
 Readonly my $SERVERS_FILE => "urt_servers_file";
 Readonly my $TS3_FILE     => "urt_ts3_file";
 Readonly my $CLAN_FILE    => "urt_clan_file";
@@ -115,11 +114,6 @@ Readonly my $COLOR_RESET => "\cO";
 # These get saved/read from your irssi config
 Irssi::settings_add_str( "misc", $GTV_IP,      "ftwgl.com:1337" );
 Irssi::settings_add_str( "misc", $GTV_MESSAGE, "No scheduled matches" );
-Irssi::settings_add_str( "misc", $RCON_HOST,   "206.217.142.38" );
-Irssi::settings_add_str( "misc", $RCON_PORT,   27960 );
-Irssi::settings_add_str( "misc", $RCON_PASS,   "abcde" )
-  ;    # XXX Of course this isn't it
-Irssi::settings_add_str( "misc", $RCON_TIMEOUT, 5 );
 Irssi::settings_add_str( "misc", $SERVERS_FILE,
     $ENV{HOME} . "/.irssi/scripts/wraithbot/conf/game_servers.txt" );
 Irssi::settings_add_str( "misc", $TS3_FILE,
@@ -178,6 +172,8 @@ for my $type ( $AUTH, $TS3_AUTH ) {
 my $VEN_AUTH = Util::IRC::Auth->new();
 $VEN_AUTH->add_private_channel("#venpriv", 1);
 $VEN_AUTH->add_public_channel("#team-veneration", 1);
+
+my $RCON = Quake3::Rcon::Util->new();
 
 sub get_server_list {
     my $fh;
@@ -346,50 +342,69 @@ sub GTV_INFO {
 # g_gametype <0-8> or <FFA|TDM|TS|FTL|CAH|CTF|BOMB>
 # say <text> where text is filtered to only allow certain characters
 # g_respawndelay <number>
-# status
 # timelimit <minutes>
 # exec <config path>
 # help
 #
+# Not doing status yet since it requires getting the data back.
+#
+# Also need one for querying the useful settings rather than !settings
+# which outputs everything.
+#
 sub handle_rcon {
-    my ( $server, $channel, $data ) = @_;
+    my ( $server, $data, $nick, $mask, $target, $is_commandline ) = @_;
 
+    $data = $FMT->plaintext_filter($data);
     if ( $data !~ m{^${BOT_PREFIX}rcon\s+\S+}ixms ) {
         return 0;
     }
 
-    if ( !defined($server) || !defined($channel) || !defined($data) ) {
+    if ( !defined($server) || !defined($target) || !defined($data) ) {
         Irssi::print("Undefined inputs");
         return 0;
     }
 
-    my $setting = {
-        host     => Irssi::settings_get_str($RCON_HOST),
-        port     => Irssi::settings_get_str($RCON_PORT),
-        password => Irssi::settings_get_str($RCON_PASS),
-        timeout  => Irssi::settings_get_str($RCON_TIMEOUT),
-    };
+    # Caller should verify but this is just in case
+    if (! $VEN_AUTH->trusted_user($server, $nick, $mask)) {
+	return 0;
+    }
+    if ($target !~ m{^(\#venpriv|[^\#]+)$}ixms) {
+        send_bold_msg($server, $target, $is_commandline,
+                      "Can only use rcon in the private channel or PM");
+        return 0;
+    }
+
+    # For now, just allow ven access and require ven members.
+    my $setting = $RCON->settings('ven');
+    if (! defined($setting)) {
+	return 0;
+    }
+
+    my $rcon_help = q{Allowed rcon commands for Veneration members: rcon map <name>, rcon map_restart, rcon g_password <pass>, rcon g_gametype <0-8> or <FFA|TDM|TS|FTL|CAH|CTF|BOMB>, rcon say <text>, rcon g_respawndelay <number>, rcon timelimit <number>, rcon exec <path>, rcon help};
 
     if ( $data =~ m{^${BOT_PREFIX}rcon\s+map\s+([a-zA-Z0-9_]+)\s*$}ixms ) {
-        return Quake3::Rcon->send_rcon( $setting, 'map', $1 );
-
+        my $mapname = $1;
+        if (Quake3::Rcon->send_rcon( $setting, 'map', $mapname )) {
+            send_bold_msg($server, $target, $is_commandline, "Set map to $mapname");
+            return 1;
+        }
     }
     elsif ( $data =~ m{^${BOT_PREFIX}rcon\s+map_restart\s*$}ixms ) {
-        return Quake3::Rcon->send_rcon( $setting, 'map_restart' );
-
+        if (Quake3::Rcon->send_rcon( $setting, 'map_restart' )) {
+            send_bold_msg($server, $target, $is_commandline, "Restarted the map");
+            return 1;
+        }
     }
     elsif ( $data =~
         m{^${BOT_PREFIX}rcon\s+g_password\s+([a-zA-Z0-9:._-]+)\s*$}ixms )
     {
-        return Quake3::Rcon->send_rcon( $setting, 'set', 'g_password', $1 );
-
-    }
-    elsif ( $data =~ m{^${BOT_PREFIX}rcon\s+g_gametype\s+([0-8])\s*$}ixms ) {
-        return Quake3::Rcon->send_rcon( $setting, 'set', 'g_gametype', $1 );
-
+        if (Quake3::Rcon->send_rcon( $setting, 'set', 'g_password', $1 )) {
+            send_bold_msg($server, $target, $is_commandline, "Set the g_password");
+            return 1;
+        }
     }
     elsif ( $data =~
-m{^${BOT_PREFIX}rcon\s+g_gametype\s+(ffa|tdm|ts|ftl|cah|ctf|bomb)\s*$}ixms
+m{^${BOT_PREFIX}rcon\s+g_gametype\s+([0-8]|ffa|tdm|ts|ftl|cah|ctf|bomb)\s*$}ixms
       )
     {
         my $gamename = uc($1);
@@ -400,9 +415,11 @@ m{^${BOT_PREFIX}rcon\s+g_gametype\s+(ffa|tdm|ts|ftl|cah|ctf|bomb)\s*$}ixms
             )
           )
         {
-            return Quake3::Rcon->send_rcon( $setting, 'set', 'g_gametype',
-                $Quake3::Commands::Util::UrbanTerror::GAME_TYPE->{$gamename} );
-
+            if (Quake3::Rcon->send_rcon( $setting, 'set', 'g_gametype',
+                $Quake3::Commands::Util::UrbanTerror::GAME_TYPE->{$gamename} )) {
+                send_bold_msg($server, $target, $is_commandline, "Set the gametype to $gamename");
+                return 1;
+            }
         }
         elsif (
             exists(
@@ -410,12 +427,14 @@ m{^${BOT_PREFIX}rcon\s+g_gametype\s+(ffa|tdm|ts|ftl|cah|ctf|bomb)\s*$}ixms
             )
           )
         {
-            return Quake3::Rcon->send_rcon( $setting, 'set', 'g_gametype',
-                $gamename );
-
+            if (Quake3::Rcon->send_rcon( $setting, 'set', 'g_gametype',
+                $gamename )) {
+                send_bold_msg($server, $target, $is_commandline, "Set the gametype to $gamename");
+                return 1;
+            }
         }
         else {
-            Irssi::print("Invalid game type: $gamename");
+            send_bold_msg($server, $target, $is_commandline, "Invalid game type: $gamename");
             return 0;
         }
 
@@ -423,33 +442,50 @@ m{^${BOT_PREFIX}rcon\s+g_gametype\s+(ffa|tdm|ts|ftl|cah|ctf|bomb)\s*$}ixms
     elsif ( $data =~
         m{^${BOT_PREFIX}rcon\s+say\s+([a-zA-Z0-9!:./\#?_-]+|\s+)+\s*$}ixms )
     {
-        return Quake3::Rcon->send_rcon( $setting, 'say', $1 );
-
+        if (Quake3::Rcon->send_rcon( $setting, 'say', $1 )) {
+            send_bold_msg($server, $target, $is_commandline,
+                          "Sent message to server");
+            return 1;
+        }
     }
     elsif ( $data =~ m{^${BOT_PREFIX}rcon\s+g_respawndelay\s+(\d+)\s*$}ixms ) {
-        return Quake3::Rcon->send_rcon( $setting, 'set', 'g_respawndelay', $1 );
-
+        my $delay = $1;
+        if (Quake3::Rcon->send_rcon( $setting, 'set', 'g_respawndelay', $delay )) {
+            send_bold_msg($server, $target, $is_commandline,
+                          "Set respawn delay to $delay");
+            return 1;
+        }
+    }
+    elsif ( $data =~ m{^${BOT_PREFIX}rcon\s+timelimit\s+(\d+)\s*$}ixms ) {
+        my $limit = $1;
+        if (Quake3::Rcon->send_rcon( $setting, 'set', 'timelimit', $limit )) {
+            send_bold_msg($server, $target, $is_commandline,
+                          "Set timelimit to $limit");
+            return 1;
+        }
+    }
+    elsif ( $data =~ m{^${BOT_PREFIX}rcon\s+exec\s+([a-zA-Z0-9_./]+)\s*$}ixms ) {
+        my $cfg = $1;
+        if (Quake3::Rcon->send_rcon( $setting, 'exec', $cfg )) {
+            send_bold_msg($server, $target, $is_commandline,
+                          "Executed config $cfg");
+            return 1;
+        }
+    }
+    elsif ( $data =~ m{^${BOT_PREFIX}rcon\s+help\s*$}ixms ) {
+	send_bold_msg($server, $target, $is_commandline, $rcon_help);
+        return 1;
     }
     elsif ( $data =~ m{^${BOT_PREFIX}rcon(\s+.*)?$}ixms ) {
-        my $msg =
-q{Invalid command.  Allowed rcon commands: map <name>, map_restart, g_password <pass>, g_gametype <0-8> or <FFA|TDM|TS|FTL|CAH|CTF|BOMB>, say <text>, g_respawndelay <number>};
-
-        if ( defined($server) && defined($channel) ) {
-	    # XXX This should use $is_commandline
-	    send_bold_msg($server, $channel->{name}, 0, $msg);
-
-        }
-        else {
-            Irssi::print("Help: $msg");
-        }
-        return 1;
-
+	send_bold_msg($server, $target, $is_commandline, "Invalid command or bad syntax for rcon: " . $rcon_help);
+        return 0;
     }
     else {
-        Irssi::print("Invalid data '$data'");
+        send_bold_msg($server, $target, $is_commandline, "Bad syntax for rcon command");
         return 0;
     }
 
+    send_bold_msg($server, $target, $is_commandline, "Rcon failed");
     return 0;
 }
 
@@ -462,6 +498,7 @@ sub handle_actions {
     if ( !is_valid_prefix($data) ) {
         return 0;
     }
+    $data = $FMT->plaintext_filter($data);
 
     if ( !$is_commandline ) {
         if ( $target =~ m{^\#}xms && !$AUTH->authorized_channel($target) ) {
@@ -612,13 +649,17 @@ sub handle_actions {
             $target );
 
 # XXX The server admin didn't want to have rcon exposed even with authorization
-#    } elsif ($data =~ /^${BOT_PREFIX}rcon\s+.*$/ixms) {
-#        if (! $AUTH->user_in_private($server, $target, $mask)) {
-#            return 0;
-#        }
-#        Irssi::print("Not handling rcon as it was requested by the server admin");
-#        return handle_rcon($server, $target, $data);
+    } elsif ($data =~ /^${BOT_PREFIX}rcon\s+.*$/ixms) {
+	if ($VEN_AUTH->trusted_user($server, $nick, $mask)) {
+	    # Irssi::print("Not handling rcon as it was requested by the server admin");
+	    if (! handle_rcon($server, $data, $nick, $mask, $target, $is_commandline)) {
+		send_bold_msg($server, $target, $is_commandline, "Failed to run rcon");
+	    }
 
+	} else {
+	    send_bold_msg($server, $target, $is_commandline, "Insufficient access for rcon");
+            return 0;
+	}
     }
     elsif ( $data =~ /^${BOT_PREFIX}meow\s*$/ixms ) {
         send_bold_msg( $server, $target, $is_commandline, $MEOW_RESPONSE );
@@ -910,8 +951,7 @@ sub cmd_rcon {
 
     # They don't want rcon so don't even mention it in the channel.
     # return handle_rcon($server, $target->{name}, '@rcon ' . $args);
-
-    return handle_rcon( undef, undef, '@rcon ' . $args );
+    #return handle_rcon( undef, undef, '@rcon ' . $args );
 }
 
 # Debugging command to print a lot of useful info.

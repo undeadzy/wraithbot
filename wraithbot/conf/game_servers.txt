@@ -25,3 +25,4 @@ West Z Best           8.6.15.92:27960
 hsf pro            68.71.61.194:27961
 Call of Nooby    208.93.223.134:27965
 Noobs Gone Wild  208.93.223.134:27966
+Veneration       68.232.174.103:27960

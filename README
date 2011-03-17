@@ -1,11 +1,12 @@
 wraithbot 0.0.1
 ===============
 
-This is the Clan iCu* IRC bot running on gamesurge in #icu and #ftwgl.  I
-started this because I was tired of xqf and qstat and wanted a way to query
-servers with filters for certain clans.  Since everyone can see the output,
-it's more social and we get more people to join that way.  It also has filters
-to report when pubs have bots (yuck) or when mid to top tier clans are playing.
+This is the Team Veneration / Clan iCu* IRC bot running on gamesurge in
+#team-veneration, #icu and #ftwgl.  I started this because I was tired of xqf
+and qstat and wanted a way to query servers with filters for certain clans.
+Since everyone can see the output, it's more social and we get more people to
+join that way.  It also has filters to report when pubs have bots (yuck) or
+when mid to top tier clans are playing.
 
 The setup isn't the greatest.  I started off with a small script to query
 game servers and it grew from there.  These should probably be plugins like
@@ -39,6 +40,8 @@ Configuration
 Most of the configuration that can rapidly change (TS3 servers, UrT servers, or
 clans) are in the conf/ directory.
 
+The rcon configuration is INI style and never committed to here.
+
 
 Background
 ----------
@@ -66,6 +69,7 @@ fortune   # optional
 
 And these Perl modules
 
+Config::IniFiles
 Net::Telnet
 Text::Wrap
 Readonly

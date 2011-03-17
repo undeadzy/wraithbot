@@ -47,6 +47,13 @@ sub new {
 sub send_rcon {
     my ( $self, $settings, @commands ) = @_;
 
+    for my $check ('host', 'port', 'timeout', 'password') {
+        if (! exists($settings->{$check}) || ! defined($settings->{$check})) {
+            print "Invalid data for $check";
+            return 0;
+        }
+    }
+
     my $socket = Quake3::Commands::Util->send_udp(
         undef,
         $settings->{host},
@@ -75,7 +82,6 @@ sub send_rcon {
           Quake3::Rcon::Commands->parse_rcon_response( $result->{data} );
         if ( $msg eq q{} ) {
             return 1;
-
         }
         else {
             cluck "Rcon failed: $msg\n";
@@ -90,8 +96,8 @@ sub send_rcon {
         }
     }
 
-    # Assuming it is ok
-    return 1;
+    # Must have hit a timeout.
+    return 0;
 }
 
 sub test_me {
