@@ -303,7 +303,7 @@ sub sanitize_ip_port {
     my ($data) = @_;
 
     $data = $FMT->plaintext_filter($data);
-    $data =~ s{[^[:alnum:]\._]+}{}gxms;
+    $data =~ s{[^[:alnum:]:\._]+}{}gxms;
 
     Irssi::settings_set_str( $GTV_IP, $data );
 
@@ -380,7 +380,7 @@ sub handle_rcon {
 	return 0;
     }
 
-    my $rcon_help = q{Allowed rcon commands for Veneration members: rcon map <name>, rcon map_restart, rcon g_password <pass>, rcon g_gametype <0-8> or <FFA|TDM|TS|FTL|CAH|CTF|BOMB>, rcon say <text>, rcon g_respawndelay <number>, rcon timelimit <number>, rcon exec <path>, rcon help};
+    my $rcon_help = q{Allowed rcon commands for Veneration members: rcon map <name>, rcon map_restart, rcon g_password <pass>, rcon g_gametype <0-8> or <FFA|TDM|TS|FTL|CAH|CTF|BOMB>, rcon say <text>, rcon g_respawndelay <number>, rcon timelimit <number>, rcon exec <path>, rcon quit, rcon help};
 
     if ( $data =~ m{^${BOT_PREFIX}rcon\s+map\s+([a-zA-Z0-9_]+)\s*$}ixms ) {
         my $mapname = $1;
@@ -471,6 +471,12 @@ m{^${BOT_PREFIX}rcon\s+g_gametype\s+([0-8]|ffa|tdm|ts|ftl|cah|ctf|bomb)\s*$}ixms
                           "Executed config $cfg");
             return 1;
         }
+    }
+    elsif ( $data =~ m{^${BOT_PREFIX}rcon\s+quit\s*$}ixms ) {
+        Quake3::Rcon->send_rcon( $setting, 'quit' );
+        send_bold_msg($server, $target, $is_commandline,
+                      "Restarting server");
+        return 1;
     }
     elsif ( $data =~ m{^${BOT_PREFIX}rcon\s+help\s*$}ixms ) {
 	send_bold_msg($server, $target, $is_commandline, $rcon_help);
@@ -868,6 +874,13 @@ sub handle_actions {
         else {
             Irssi::print(qq{Should not be here});
         }
+
+    }
+    elsif ( $data =~ m{^${BOT_PREFIX}ts3\s*$}ixms ) {
+        # People make this mistake a lot so print out a helpful message
+        send_bold_msg( $server, $target, $is_commandline,
+            "Use with a server alias.  Example: \"!ts3 ven\"  Server aliases: "
+              . join( ", ", sort { lc($a) cmp lc($b) } ( keys( %{$TS3} ) ) ) );
 
     }
     elsif ( $data =~ m{^${BOT_PREFIX}wraithbot\s*$}ixms ) {

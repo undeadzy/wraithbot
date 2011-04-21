@@ -22,7 +22,7 @@ NN		^\|NN\|
 GlaD		^GlaD
 xor		^xor-
 M-19		^\[M-19\]
-dt		^\[dt\]
+dt		^\[dt\..+\]$
 SA		^SA\|
 syh		^syh\.
 NoCareBear	^\[\</3\]
@@ -42,7 +42,7 @@ QA		^QA-
 # More clans
 dhs		^dhs\|
 pRo		\*pRo$
-21		^(21|blackjack)\.
+21		^(:?21|blackjack)\.
 THC		^\*THC\*
 zL		^zL\*
 eVo		^/eVo/
@@ -54,6 +54,11 @@ sM		^\]sM\..+\[$
 cDc		^cDc\*
 wTf		^wTf\|
 Q0		^-Q0
+b00bs		^\[b00bs\]
+bra		^bra\`
+itc		^\!Tc\.\|
+ik		^ik\|
+zod		^z(?:od)?\'
 
 # Dead clans that were good.  May catch a few members from time to time.
 # This list is also tiny and could use some help.
