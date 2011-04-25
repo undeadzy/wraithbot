@@ -66,8 +66,9 @@ use Util::TS3::Wrapper;
 
 use Util::Fortune;
 use Util::Quotes;
-use Util::FTW;
+use Util::League;
 use Util::Venspeak;
+use Util::Version;
 
 use Util::IRC::Auth;
 use Util::IRC::Format;
@@ -135,7 +136,9 @@ Readonly my $URT => Quake3::Commands::Util::UrbanTerror->new(
     Irssi::settings_get_str($CLAN_FILE) );
 Readonly my $QUOTES =>
   Util::Quotes->new( Irssi::settings_get_str($QUOTES_FILE) );
-Readonly my $TIME => Util::FTW->new();
+
+# Leagues
+Readonly my $LEAGUE => Util::League->new();
 
 # The bot listens in any channel in the private or public area.
 # The ops => argument is used to determine whether this channel should be used for authorization.
@@ -319,6 +322,23 @@ sub sanitize_msg {
     Irssi::settings_set_str( $GTV_MESSAGE, $data );
 
     return 1;
+}
+
+sub filter_league {
+    my ($name, $target) = @_;
+
+    $name =~ s{\s+$}{};
+    $name =~ s{^\s+}{};
+    $name =~ s{^ftw$}{ftwgl}ixms;
+
+    if (!defined($name) || $name eq q{}) {
+        my $name = $target;
+        $name =~ s{^#}{};
+        $name =~ s{^stfleague$}{stf}ixms;
+        $name =~ s{^esl\.urt$}{esl}ixms;
+    }
+
+    return $name;
 }
 
 # This is the main message that gets printed from the !gtv command.
@@ -547,25 +567,45 @@ sub handle_actions {
         return;
 
     }
-    elsif ( $data =~ /^${BOT_PREFIX}next[_\s+]match(?:es)?\s*$/ixms ) {
-	my @lines = $TIME->next_matches();
+
+    # FTW, ESL and STF.  If no league is given, it tries to use the target channel
+    elsif ( $data =~ /^${BOT_PREFIX}next([_\s+][^_\s]+)?(?:[_\s+]match(?:es)?)?\s*$/ixms ) {
+        my $name = filter_league($1, $target);
+	my @lines = $LEAGUE->next_matches($name);
 	for my $line (@lines) {
 	    send_bold_msg( $server, $target, $is_commandline, $line );
 	}
     }
-    elsif ( $data =~ /^${BOT_PREFIX}next[_\s+]ts(?:[_\s+]match(?:es)?)?\s*$/ixms ) {
+    elsif ( $data =~ /^${BOT_PREFIX}next([_\s+][^_\s]+)?[_\s+]ts(?:[_\s+]match(?:es)?)?\s*$/ixms ) {
+        my $name = filter_league($1, $target);
 	send_bold_msg( $server, $target, $is_commandline,
-		       $TIME->next_ts() );
+		       $LEAGUE->next_match($name, 'ts') );
 
     }
-    elsif ( $data =~ /^${BOT_PREFIX}next[_\s+]ctf(?:[_\s+]match(?:es)?)?\s*$/ixms ) {
+    elsif ( $data =~ /^${BOT_PREFIX}next([_\s+][^_\s]+)?[_\s+]ctf(?:[_\s+]match(?:es)?)?\s*$/ixms ) {
+        my $name = filter_league($1, $target);
 	send_bold_msg( $server, $target, $is_commandline,
-		       $TIME->next_ctf() );
+		       $LEAGUE->next_match($name, 'ctf') );
 
     }
-    elsif ( $data =~ /^${BOT_PREFIX}(?:(?:ftwgl|current)[_\s+])?time\s*$/ixms ) {
+    elsif ( $data =~ /^${BOT_PREFIX}([^_\s+]+[_\s+])?(?:current[_\s+])?time\s*$/ixms ) {
+        my $name = filter_league($1, $target);
 	send_bold_msg( $server, $target, $is_commandline,
-		       $TIME->current_time() );
+		       $LEAGUE->current_time($name) );
+    }
+
+    elsif ( $data =~ /^${BOT_PREFIX}reload[_\s+]leagues?\s*$/ixms ) {
+        if ( !$AUTH->user_is_privileged( $server, $nick, $mask ) ) {
+            send_bold_msg( $server, $target, $is_commandline,
+                "Insufficient access to run this command" );
+            return 0;
+
+        }
+        else {
+            $LEAGUE->load();
+            send_bold_msg( $server, $target, $is_commandline,
+                "Reloaded UrT league information" );
+        }
 
     }
     elsif ( $data =~ /^${BOT_PREFIX}reload[_\s+]servers?\s*$/ixms ) {
@@ -622,8 +662,9 @@ sub handle_actions {
             $TS3     = get_ts3_list();
             $URT->reload_clans();
             $QUOTES->reload_quotes();
+            $LEAGUE->load();
             send_bold_msg( $server, $target, $is_commandline,
-                "Reloaded TS3, UrT server and UrT clan information" );
+                "Reloaded TS3, UrT server, UrT clan and UrT league information" );
         }
 
     }
@@ -883,9 +924,9 @@ sub handle_actions {
               . join( ", ", sort { lc($a) cmp lc($b) } ( keys( %{$TS3} ) ) ) );
 
     }
-    elsif ( $data =~ m{^${BOT_PREFIX}wraithbot\s*$}ixms ) {
+    elsif ( $data =~ m{^${BOT_PREFIX}(?:version|wraithbot)\s*$}ixms ) {
         send_bold_msg( $server, $target, $is_commandline,
-"wraithbot is maintained by undeadzy https://github.com/undeadzy/wraithbot"
+$Util::Version::REPO . " is maintained by " . $Util::Version::OWNER . " " . Util::Version->last_update()
         );
 
     }

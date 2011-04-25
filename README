@@ -75,6 +75,9 @@ Text::Wrap
 Readonly
 IPC::System::Simple
 DateTime::Format::Natural
+String::Approx
+Net::GitHub
+Date::Parse
 version 0.77 or above
 
 # These are needed for some tests but not the execution
