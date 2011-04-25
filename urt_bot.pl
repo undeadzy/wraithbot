@@ -569,26 +569,21 @@ sub handle_actions {
     }
 
     # FTW, ESL and STF.  If no league is given, it tries to use the target channel
-    elsif ( $data =~ /^${BOT_PREFIX}next([_\s+][^_\s]+)?(?:[_\s+]match(?:es)?)?\s*$/ixms ) {
+    elsif ( $data =~ /^${BOT_PREFIX}next([_\s+][a-z]+)?(?:[_\s+]match(?:es)?)?\s*$/ixms ) {
         my $name = filter_league($1, $target);
 	my @lines = $LEAGUE->next_matches($name);
 	for my $line (@lines) {
 	    send_bold_msg( $server, $target, $is_commandline, $line );
 	}
     }
-    elsif ( $data =~ /^${BOT_PREFIX}next([_\s+][^_\s]+)?[_\s+]ts(?:[_\s+]match(?:es)?)?\s*$/ixms ) {
+    elsif ( $data =~ /^${BOT_PREFIX}next([_\s+][a-z]+)?[_\s+]([a-z0-9]+)(?:[_\s+]match(?:es)?)?\s*$/ixms ) {
         my $name = filter_league($1, $target);
+        my $type = $2;
 	send_bold_msg( $server, $target, $is_commandline,
-		       $LEAGUE->next_match($name, 'ts') );
+		       $LEAGUE->next_match($name, $type) );
 
     }
-    elsif ( $data =~ /^${BOT_PREFIX}next([_\s+][^_\s]+)?[_\s+]ctf(?:[_\s+]match(?:es)?)?\s*$/ixms ) {
-        my $name = filter_league($1, $target);
-	send_bold_msg( $server, $target, $is_commandline,
-		       $LEAGUE->next_match($name, 'ctf') );
-
-    }
-    elsif ( $data =~ /^${BOT_PREFIX}([^_\s+]+[_\s+])?(?:current[_\s+])?time\s*$/ixms ) {
+    elsif ( $data =~ /^${BOT_PREFIX}([^_\s+]+[a-z]+)?(?:current[_\s+])?time\s*$/ixms ) {
         my $name = filter_league($1, $target);
 	send_bold_msg( $server, $target, $is_commandline,
 		       $LEAGUE->current_time($name) );
