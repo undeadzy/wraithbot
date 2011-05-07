@@ -8,7 +8,8 @@
 # Don't keep too many in here because we have to output to IRC.
 
 iCu*             216.52.143.168:27960
-UrT East          74.207.235.61:27961
+#UrT East          74.207.235.61:27961
+UrT East        173.230.135.245:27961
 Spray & Pray      64.94.101.216:27960
 fidelitas            46.4.21.68:30100
 =jF=              81.19.219.168:27970
@@ -27,4 +28,4 @@ Veneration        66.55.137.164:27960
 Nooby             64.94.101.217:27960
 b00bs downtown    69.164.210.60:27967
 unRestricted       96.8.112.100:27960
-
+# Temp UrT East      64.74.97.240:27961

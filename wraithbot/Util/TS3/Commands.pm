@@ -90,13 +90,18 @@ sub _open {
     $self->{$TS3} = Net::Telnet->new(
         Host       => $self->{$SERVER},
         Port       => $self->{$PORT},
-        Timeout    => 5,
+        Errmode    => "return",
+        Timeout    => 10,
         Telnetmode => 0,
         Prompt     => '/error\s+id=\d+\s+msg=\S+(?:\s+failed_permid=\d+)?\n\r/',
         Binmode    => 1,
         Output_record_separator => "\r\n",
         Input_record_separator  => "\n\r"
     );
+
+    # Default is 'die' so instead make it return undef or an empty list
+    # depending on the context.
+    $self->{$TS3}->errmode("return");
 
     # Debugging
     # $self->{$TS3}->dump_log(\*STDOUT);

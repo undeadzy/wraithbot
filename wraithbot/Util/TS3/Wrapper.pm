@@ -153,12 +153,12 @@ sub get_listing {
     my $res;
 
     $res = $self->{$TS3}->use_server( undef, $virt_server );
-    if ( $res->{result}->{id} != 0 ) {
+    if ( !defined($res) || $res->{result}->{id} != 0 ) {
         return { msg => "Error connecting to virtual server", channels => {}, welcome => $welcome };
     }
 
     $res = $self->{$TS3}->client_list( { 'voice' => 1 } );
-    if ( $res->{result}->{id} != 0 ) {
+    if ( !defined($res) || $res->{result}->{id} != 0 ) {
         return { msg => "Error running clientlist", channels => {}, welcome => $welcome };
     }
 
@@ -186,7 +186,7 @@ sub get_listing {
     }
 
     $res = $self->{$TS3}->channel_list();
-    if ( $res->{result}->{id} != 0 ) {
+    if ( !defined($res) || $res->{result}->{id} != 0 ) {
         return { msg => "Error running channellist", channels => {}, welcome => $welcome };
     }
 
@@ -200,7 +200,7 @@ sub get_listing {
     }
 
     $res = $self->{$TS3}->server_info();
-    if ( $res->{result}->{id} != 0 ) {
+    if ( !defined($res) || $res->{result}->{id} != 0 ) {
         return { msg => "Error running serverinfo", channels => {}, welcome => $welcome };
     }
 
@@ -211,7 +211,7 @@ sub get_listing {
     }
 
     $res = $self->{$TS3}->quit();
-    if ( $res->{result}->{id} != 0 ) {
+    if ( !defined($res) || $res->{result}->{id} != 0 ) {
         return { msg => "Error running quit", channels => {}, welcome => $welcome };
     }
 

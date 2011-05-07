@@ -160,6 +160,7 @@ for my $type ( $AUTH, $TS3_AUTH ) {
     $type->add_public_channel( "#icu",             0 );
     $type->add_public_channel( "#clan-vex",        0 );
     $type->add_public_channel( "#cakeclan",        0 );
+    $type->add_public_channel( "#pugbot",          0 );
 
   # Testing channel
     $type->add_public_channel( "#urtpub",          0 );
@@ -951,6 +952,10 @@ $Util::Version::REPO . " is maintained by " . $Util::Version::OWNER . " " . Util
 # to track changes like passwords.
 sub msg_private_servers {
     my ( $server, $data, $nick, $mask ) = @_;
+
+    if ( !is_valid_prefix($data) ) {
+        return 0;
+    }
 
     # Only allow trusted users to private message the bot
     if ( !$AUTH->trusted_user( $server, $nick, $mask ) ) {
