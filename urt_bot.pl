@@ -734,6 +734,11 @@ sub handle_actions {
         return $URT->print_servers_status( $SERVERS, $server, $target );
 
     }
+    elsif ( $data =~ /^${BOT_PREFIX}servers?[_\s+]list\s*$/ixms ) {
+        send_bold_msg( $server, $target, $is_commandline,
+                       join(", ", sort { lc($a) cmp lc($b) } (map { $SERVERS->{$_}->{name} } keys(%{$SERVERS}))) );
+
+    }
     elsif ( $data =~ /^${BOT_PREFIX}isms?\s*$/ixms ) {
         my $resp = $QUOTES->get_quote_status();
         send_bold_msg( $server, $target, $is_commandline, $resp );
